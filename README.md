@@ -1,4 +1,4 @@
-# GoText2Speech
+# GoText2Speech [WIP]
 
 ## Info
 This project is a unified abstraction layer for cloud Text-to-Speech services and can be used within Go programs to access Text-to-Speech services from the following providers:

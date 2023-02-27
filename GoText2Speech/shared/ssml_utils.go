@@ -7,6 +7,13 @@ import (
 	"strings"
 )
 
+// HasSpeakTag checks if the given text is surrounded by <speak>-tags, i.e. <speak ...>...</speak>.
+// If the given text is not surrounded by <speak>-tags, it is not a valid SSML text.
+func HasSpeakTag(text string) bool {
+	trimmedText := strings.TrimSpace(text)
+	return strings.HasPrefix(trimmedText, "<speak") && strings.HasSuffix(trimmedText, "</speak>")
+}
+
 // GetOpeningTagOfSSMLText Returns the opening tag (i.e. opening of root node) from SSML text
 // Example 1: <speak>...</speak> -> <speak>
 // Example 2: <speak volume="10db">...</speak> -> <speak volume="10db">

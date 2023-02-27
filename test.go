@@ -100,10 +100,15 @@ func CreatePollyClient() *polly.Polly {
 // T2SDirect creates text to speech input (AWS specific)
 func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechInput {
 
+	// error check: If the given text is supposed to be a SSML text and does not contain <speak>-tags, it is invalid.
+	if (options.TextType == TextTypeSsml) && !HasSpeakTag(text) {
+		// TODO throw error
+	}
+
 	// if text type is auto, text type needs to be inferred
 	if options.TextType == TextTypeAuto {
 		// SSML text needs to be wrapped in a "speak" root node (i.e. <speak>...</speak>)
-		if strings.HasPrefix(text, "<speak>") && strings.HasSuffix(text, "</speak>") { // TODO wrap in function and use for err detection
+		if HasSpeakTag(text) { // TODO wrap in function and use for err detection
 			options.TextType = TextTypeSsml
 		} else {
 			options.TextType = TextTypeText

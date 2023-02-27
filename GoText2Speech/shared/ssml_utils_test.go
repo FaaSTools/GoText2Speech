@@ -5,6 +5,38 @@ import (
 	"testing"
 )
 
+func TestHasSpeakTag(t *testing.T) {
+	t1 := "hello"
+	if HasSpeakTag(t1) {
+		t.Error("HasSpeakTag returned true for text that didn't contain <speak>-tags")
+	}
+
+	t2 := "hello</speak>"
+	if HasSpeakTag(t2) {
+		t.Error("HasSpeakTag returned true for text that didn't contain a starting <speak>-tag")
+	}
+
+	t3 := "<speak>hello"
+	if HasSpeakTag(t3) {
+		t.Error("HasSpeakTag returned true for text that didn't contain a ending <speak>-tag")
+	}
+
+	t4 := "<speak>hello</speak>"
+	if !HasSpeakTag(t4) {
+		t.Error("HasSpeakTag returned false for text that was surrounded with <speak>-tags")
+	}
+
+	t5 := "<speak attr=\"1\">hello</speak>"
+	if !HasSpeakTag(t5) {
+		t.Error("HasSpeakTag returned false for text that was surrounded with <speak>-tags and had attributes")
+	}
+
+	t6 := " \t\n<speak>hello</speak> \t\n"
+	if !HasSpeakTag(t6) {
+		t.Error("HasSpeakTag returned false for text that was surrounded with <speak>-tags with whitespace")
+	}
+}
+
 func TestEscapeTextForSSMLUnchanged(t *testing.T) {
 	t1 := "Hello World!"
 	if t1 != EscapeTextForSSML(t1) {

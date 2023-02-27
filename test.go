@@ -13,7 +13,7 @@ import (
 )
 
 import (
-	. "goTest/GoText2Speech/aws"
+	ts2_aws "goTest/GoText2Speech/aws"
 	. "goTest/GoText2Speech/shared"
 )
 
@@ -103,7 +103,7 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 	// if text type is auto, text type needs to be inferred
 	if options.TextType == TextTypeAuto {
 		// SSML text needs to be wrapped in a "speak" root node (i.e. <speak>...</speak>)
-		if strings.HasPrefix(text, "<speak>") && strings.HasSuffix(text, "</speak>") {
+		if strings.HasPrefix(text, "<speak>") && strings.HasSuffix(text, "</speak>") { // TODO wrap in function and use for err detection
 			options.TextType = TextTypeSsml
 		} else {
 			options.TextType = TextTypeText
@@ -155,22 +155,9 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 		}
 	}
 
-	// TODO adjust parameters for Google/AWS
-
-	// TODO only AWS
-	// if these modifiers are defined, the text needs to be wrapped in SSML <speak>...</speak> tags to add those modifiers
-	if SSMLModifiersDefined(options) {
-		if options.TextType == TextTypeText {
-			text = TransformTextIntoSSML(text, options)
-			options.TextType = TextTypeSsml
-		} else {
-			// integrate parameters into root speak element
-			openingTag := GetOpeningTagOfSSMLText(text)
-			openingTag = IntegrateVolumeAttributeValueIntoTag(openingTag, options.Volume)
-			openingTag = IntegrateSpeakingRateAttributeValueIntoTag(openingTag, options.SpeakingRate)
-			openingTag = IntegratePitchAttributeValueIntoTag(openingTag, options.Pitch)
-		}
-	}
+	// adjust parameters for Google/AWS
+	provider := GetProviderInstance()
+	text, options = provider.TransformOptions(text, options)
 
 	fmt.Println("Final Text: " + text)
 
@@ -187,4 +174,10 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 	// TODO execute T2S
 
 	return input2
+}
+
+// GetProviderInstance returns an instance of a provider struct
+func GetProviderInstance() T2SProvider {
+	// TODO via options and heuristics
+	return ts2_aws.T2SAmazonWebServices{}
 }

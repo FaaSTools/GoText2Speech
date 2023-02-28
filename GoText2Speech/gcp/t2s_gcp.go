@@ -5,6 +5,7 @@ import (
 )
 
 type T2SGoogleCloudPlatform struct {
+	t2sClient any // TODO set correct type
 }
 
 func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions) {

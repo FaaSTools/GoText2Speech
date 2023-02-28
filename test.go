@@ -13,6 +13,8 @@ import (
 
 import (
 	ts2_aws "goTest/GoText2Speech/aws"
+	ts2_gcp "goTest/GoText2Speech/gcp"
+	"goTest/GoText2Speech/providers"
 	. "goTest/GoText2Speech/shared"
 )
 
@@ -115,8 +117,12 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 		}
 	}
 
-	// TODO choose provider
-	provider := GetProviderInstance()
+	if options.Provider == providers.ProviderUnspecified {
+		// TODO choose provider based on heuristics
+		options.Provider = providers.ProviderAWS
+	}
+
+	provider := CreateProviderInstance(options.Provider)
 
 	if options.VoiceConfig.VoiceIdConfig.IsEmpty() {
 		// if both VoiceParamsConfig is undefined -> use default object
@@ -134,7 +140,7 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 
 		newOptions, err := provider.ChooseVoice(options)
 		if err != nil {
-			fmt.Errorf(err.Error())
+			fmt.Print(err.Error())
 			return polly.SynthesizeSpeechInput{}
 			// TODO throw error
 		}
@@ -165,4 +171,15 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 func GetProviderInstance() T2SProvider {
 	// TODO via options and heuristics
 	return ts2_aws.T2SAmazonWebServices{}
+}
+
+func CreateProviderInstance(provider providers.Provider) T2SProvider {
+	switch provider {
+	case providers.ProviderAWS:
+		return ts2_aws.T2SAmazonWebServices{}
+	case providers.ProviderGCP:
+		return ts2_gcp.T2SGoogleCloudPlatform{}
+	default:
+		return nil
+	}
 }

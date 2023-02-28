@@ -2,6 +2,8 @@
 
 package shared
 
+import "goTest/GoText2Speech/providers"
+
 type VoiceGender int16
 
 const (
@@ -95,6 +97,7 @@ type VoiceConfig struct {
 
 type TextToSpeechOptions struct {
 	_           struct{}
+	Provider    providers.Provider
 	TextType    TextType
 	VoiceConfig VoiceConfig
 	// TODO default value for SpeakingRate?

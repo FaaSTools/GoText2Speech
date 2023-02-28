@@ -14,10 +14,12 @@ func HasSpeakTag(text string) bool {
 	return strings.HasPrefix(trimmedText, "<speak") && strings.HasSuffix(trimmedText, "</speak>")
 }
 
-// GetOpeningTagOfSSMLText Returns the opening tag (i.e. opening of root node) from SSML text
-// Example 1: <speak>...</speak> -> <speak>
-// Example 2: <speak volume="10db">...</speak> -> <speak volume="10db">
-// TODO what if <speak> tag wasn't found at all?
+// GetOpeningTagOfSSMLText Returns the opening tag (i.e. opening of root node) from SSML text (i.e. <speak>).
+// This function expects there to be an opening tag, i.e. <speak>.
+// If it cannot be expected that the given text always contains an opening tag, use HasSpeakTag to check for an opening tag.
+// Example 1: "<speak>...</speak>" -> "<speak>"
+// Example 2: "<speak volume="10db">...</speak>" -> "<speak volume="10db">"
+// Example 3: "Hello World" -> "Hello World"
 func GetOpeningTagOfSSMLText(text string) string {
 	return strings.SplitAfter(text, ">")[0]
 }

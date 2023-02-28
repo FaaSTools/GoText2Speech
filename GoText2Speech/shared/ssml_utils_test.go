@@ -71,6 +71,15 @@ func TestGetOpeningTagOfSSMLTextWithAttributes(t *testing.T) {
 	}
 }
 
+func TestGetOpeningTagOfSSMLTextWithoutTag(t *testing.T) {
+	input := "Hello World"
+	want := input
+	result := GetOpeningTagOfSSMLText(input)
+	if want != result {
+		t.Errorf("Non-existing opening tag was not correctly handled.\nWatend:\t%s\nGot:\t%s", want, result)
+	}
+}
+
 // TestTransformTextIntoSSMLNormal test if text is escaped properly, wrapped in <speak>-tags and
 // if attributes are added to opening speak tag
 func TestTransformTextIntoSSMLNormal(t *testing.T) {

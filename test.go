@@ -108,7 +108,7 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 	// if text type is auto, text type needs to be inferred
 	if options.TextType == TextTypeAuto {
 		// SSML text needs to be wrapped in a "speak" root node (i.e. <speak>...</speak>)
-		if HasSpeakTag(text) { // TODO wrap in function and use for err detection
+		if HasSpeakTag(text) {
 			options.TextType = TextTypeSsml
 		} else {
 			options.TextType = TextTypeText

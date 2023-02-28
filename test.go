@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/polly"
 	"regexp"
-	"strings"
 )
 
 import (
@@ -103,6 +102,7 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 	// error check: If the given text is supposed to be a SSML text and does not contain <speak>-tags, it is invalid.
 	if (options.TextType == TextTypeSsml) && !HasSpeakTag(text) {
 		// TODO throw error
+		return polly.SynthesizeSpeechInput{}
 	}
 
 	// if text type is auto, text type needs to be inferred
@@ -115,7 +115,8 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 		}
 	}
 
-	svc := CreatePollyClient()
+	// TODO choose provider
+	provider := GetProviderInstance()
 
 	if options.VoiceConfig.VoiceIdConfig.IsEmpty() {
 		// if both VoiceParamsConfig is undefined -> use default object
@@ -131,37 +132,16 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 			}
 		}
 
-		// Get list of available voices for the chosen language and pick the first one with the correct gender
-		input := &polly.DescribeVoicesInput{LanguageCode: aws.String(options.VoiceConfig.VoiceParamsConfig.LanguageCode)}
-		resp, err := svc.DescribeVoices(input)
-
+		newOptions, err := provider.ChooseVoice(options)
 		if err != nil {
-			fmt.Printf("Error while describing voices: " + err.Error())
-			return polly.SynthesizeSpeechInput{} // TODO throw err?
+			fmt.Errorf(err.Error())
+			return polly.SynthesizeSpeechInput{}
+			// TODO throw error
 		}
-
-		voiceFound := false
-		for _, v := range resp.Voices {
-			if strings.EqualFold(*v.Gender, options.VoiceConfig.VoiceParamsConfig.Gender.String()) {
-				options.VoiceConfig.VoiceIdConfig = VoiceIdConfig{VoiceId: *v.Name}
-				voiceFound = true
-				fmt.Printf("Found voice with language %s and gender %s: %s\n",
-					options.VoiceConfig.VoiceParamsConfig.LanguageCode,
-					options.VoiceConfig.VoiceParamsConfig.Gender.String(),
-					*v.Name)
-			}
-		}
-
-		if !voiceFound {
-			fmt.Printf("No voice found for language %s and gender %s\n",
-				options.VoiceConfig.VoiceParamsConfig.LanguageCode,
-				options.VoiceConfig.VoiceParamsConfig.Gender.String())
-			return polly.SynthesizeSpeechInput{} // TODO throw err?
-		}
+		options = newOptions
 	}
 
 	// adjust parameters for Google/AWS
-	provider := GetProviderInstance()
 	text, options = provider.TransformOptions(text, options)
 
 	fmt.Println("Final Text: " + text)

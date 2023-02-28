@@ -11,3 +11,8 @@ func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpee
 	// TODO implement
 	return text, options
 }
+
+func (a T2SGoogleCloudPlatform) ChooseVoice(options TextToSpeechOptions) (TextToSpeechOptions, error) {
+	// TODO implement
+	return options, nil
+}

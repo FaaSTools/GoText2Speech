@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/polly"
 	. "goTest/GoText2Speech/shared"
+	"io"
+	"os"
 	"strings"
 )
 
@@ -14,10 +16,31 @@ type T2SAmazonWebServices struct {
 	t2sClient *polly.Polly
 }
 
+// AudioFormatToAWSValue Converts the given AudioFormat into a valid format that can be used on AWS.
+// If AudioFormat is unspecified, mp3 will be used.
+// If AudioFormat is not supported on AWS, an error is thrown.
+// Available audio formats on AWS can be seen here: https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html#polly-SynthesizeSpeech-request-OutputFormat
+func AudioFormatToAWSValue(format AudioFormat) (string, error) {
+	switch format {
+	case AudioFormatUnspecified:
+		fallthrough
+	case AudioFormatMp3:
+		return "mp3", nil
+	case AudioFormatOgg:
+		return "ogg_vorbis", nil
+	case AudioFormatJson:
+		return "json", nil
+	case AudioFormatPcm:
+		return "pcm", nil
+	default:
+		return "", errors.New("the specified audio format " + string(format) + " is not available on AWS. Either choose a different audio format, choose a different provider or use the TextToSpeechOptions.OutputFormatRaw property to overwrite type check.")
+	}
+}
+
 // TransformOptions
 // This function assumes that the basic options check was already executed,
 // i.e. that options.TextType cannot be TextTypeAuto and that if the text is SSML text, it contains correctly formed <speak>-tags.
-func (a T2SAmazonWebServices) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions) {
+func (a T2SAmazonWebServices) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions, error) {
 	// if these modifiers are defined, the text needs to be wrapped in SSML <speak>...</speak> tags to add those modifiers
 	if SSMLModifiersDefined(options) {
 		if options.TextType == TextTypeText {
@@ -31,7 +54,16 @@ func (a T2SAmazonWebServices) TransformOptions(text string, options TextToSpeech
 			openingTag = IntegratePitchAttributeValueIntoTag(openingTag, options.Pitch)
 		}
 	}
-	return text, options
+
+	if options.OutputFormatRaw == nil {
+		outputFormatRaw, audioFormatError := AudioFormatToAWSValue(options.OutputFormat)
+		if audioFormatError != nil {
+			return text, options, audioFormatError
+		}
+		options.OutputFormatRaw = outputFormatRaw
+	}
+
+	return text, options, nil
 }
 
 // ChooseVoice chooses a voice for AWS Polly based on the given parameters (language and gender)
@@ -72,4 +104,55 @@ func (a T2SAmazonWebServices) CreateClient() {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 	a.t2sClient = polly.New(sess)
+}
+
+func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
+
+	outputFormatRaw, outputFormatAssertedCorrectly := options.OutputFormatRaw.(string)
+
+	if !outputFormatAssertedCorrectly {
+		outputFormatError := errors.New("the raw output format was not a string, but AWS can only use strings as output format")
+		return outputFormatError
+	}
+
+	speechInput := polly.SynthesizeSpeechInput{
+		OutputFormat: aws.String(outputFormatRaw),
+		Text:         aws.String(text),
+		VoiceId:      aws.String(options.VoiceConfig.VoiceIdConfig.VoiceId),
+		TextType:     aws.String(options.TextType.String())}
+
+	if options.SampleRate != 0 {
+		speechInput.SetSampleRate(fmt.Sprintf("%d", options.SampleRate))
+	}
+
+	output, err := a.t2sClient.SynthesizeSpeech(&speechInput)
+
+	if err != nil {
+		errNew := errors.New("Error while synthesizing speech on AWS: " + err.Error())
+		fmt.Printf(errNew.Error())
+		return errNew
+	}
+
+	outFile, err := os.Create(destination) // TODO file extension?
+
+	if err != nil {
+		errNew := errors.New("Error creating file: " + err.Error())
+		fmt.Printf(errNew.Error())
+		return errNew
+	}
+
+	defer outFile.Close()
+	_, err = io.Copy(outFile, output.AudioStream)
+	if err != nil {
+		errNew := errors.New("Error writing mp3 file: " + err.Error())
+		fmt.Printf(errNew.Error())
+		return errNew
+	}
+
+	return nil
+}
+
+func (a T2SAmazonWebServices) ExecuteT2S(source string, destination string, options TextToSpeechOptions) error {
+
+	return nil
 }

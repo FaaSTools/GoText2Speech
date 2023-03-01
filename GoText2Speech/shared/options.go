@@ -95,6 +95,34 @@ type VoiceConfig struct {
 	VoiceParamsConfig VoiceParamsConfig
 }
 
+// AudioFormat See which output formats are available on each provider in the respective documentation:
+// AWS Doc: https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html#polly-SynthesizeSpeech-request-OutputFormat
+// GCP Doc: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioEncoding
+type AudioFormat string
+
+// The defined strings for AudioFormat are just for text logs, they shouldn't be used as the raw output format for
+// the chosen provider.
+const (
+	// AudioFormatUnspecified If audio format is unspecified, the default audio format will be used.
+	// The default audio format is defined per provider, for example in the `AudioFormatToAWSValue` function for AWS
+	// or the `AudioFormatToGCPValue` function for GCP.
+	AudioFormatUnspecified AudioFormat = ""
+	// AudioFormatMp3 Available on both AWS and GCP
+	AudioFormatMp3 AudioFormat = "mp3"
+	// AudioFormatOgg Available on both AWS (as OGG vorbis) and GCP (as OGG opus)
+	AudioFormatOgg AudioFormat = "ogg"
+	// AudioFormatPcm Available only on AWS
+	AudioFormatPcm AudioFormat = "pcm"
+	// AudioFormatJson Available only on AWS
+	AudioFormatJson AudioFormat = "json"
+	// AudioFormatLinear16 Available only on GCP
+	AudioFormatLinear16 AudioFormat = "linear16"
+	// AudioFormatMulaw Available only on GCP
+	AudioFormatMulaw AudioFormat = "mulaw"
+	// AudioFormatAlaw Available only on GCP
+	AudioFormatAlaw AudioFormat = "alaw"
+)
+
 type TextToSpeechOptions struct {
 	_           struct{}
 	Provider    providers.Provider
@@ -117,6 +145,16 @@ type TextToSpeechOptions struct {
 	// GCP Doc: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioConfig
 	// If SampleRate is 0, the default value for the provider is selected
 	SampleRate int
+	// OutputFormat Each provider allows different output formats.
+	// AWS Doc: https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html#polly-SynthesizeSpeech-request-OutputFormat
+	// GCP Doc: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioEncoding
+	OutputFormat AudioFormat
+	// OutputFormatRaw The raw output format that is directly given to the t2s function of the chosen provider.
+	// It can be used to overwrite the OutputFormat value and thereby bypass the type check.
+	// If this is specified, OutputFormat is ignored.
+	// OutputFormatRaw is not used to figure what provider to choose. The t2s functions don't check if the value
+	// of OutputFormatRaw is allowed for the chosen provider. So, only use this property if you know what you are doing.
+	OutputFormatRaw any
 }
 
 // GetDefaultVoiceParamsConfig The default value for VoiceParamsConfig

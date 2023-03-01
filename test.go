@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/polly"
 	"regexp"
 )
@@ -58,31 +57,6 @@ func main() {
 		Pitch:        0.0,
 		Volume:       0.0,
 	})
-
-	/*
-		output, err := svc.SynthesizeSpeech(&input2)
-
-		if err != nil {
-			fmt.Printf("Error:" + err.Error())
-			os.Exit(1)
-		}
-
-		outFile, err := os.Create("test.mp3")
-
-		if err != nil {
-			fmt.Println("Error creating file: " + err.Error())
-			os.Exit(1)
-		}
-
-		defer outFile.Close()
-		_, err = io.Copy(outFile, output.AudioStream)
-		if err != nil {
-			fmt.Println("Error writing mp3 file: " + err.Error())
-			os.Exit(1)
-		}
-
-		fmt.Println("Speech synthesized and mp3 file written")
-	*/
 }
 
 // T2SDirect creates text to speech input (AWS specific)
@@ -136,24 +110,20 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 	}
 
 	// adjust parameters for Google/AWS
-	text, options = provider.TransformOptions(text, options)
+	var transformOptionsError error
+	text, options, transformOptionsError = provider.TransformOptions(text, options)
+
+	if transformOptionsError != nil {
+		fmt.Print(transformOptionsError.Error())
+		return polly.SynthesizeSpeechInput{}
+		// TODO throw error
+	}
 
 	fmt.Println("Final Text: " + text)
 
-	// TODO provider specific
-	input2 := polly.SynthesizeSpeechInput{
-		OutputFormat: aws.String("mp3"),
-		Text:         aws.String(text),
-		VoiceId:      aws.String(options.VoiceConfig.VoiceIdConfig.VoiceId),
-		TextType:     aws.String(options.TextType.String())}
+	provider.ExecuteT2SDirect(text, "", options) // TODO param & return type
 
-	if options.SampleRate != 0 {
-		input2.SetSampleRate(fmt.Sprintf("%d", options.SampleRate))
-	}
-
-	// TODO execute T2S
-
-	return input2
+	return polly.SynthesizeSpeechInput{} // TODO return type
 }
 
 // GetProviderInstance returns an instance of a provider struct

@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"errors"
+	"fmt"
 	. "goTest/GoText2Speech/shared"
 )
 
@@ -8,16 +10,64 @@ type T2SGoogleCloudPlatform struct {
 	t2sClient any // TODO set correct type
 }
 
-func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions) {
+// AudioFormatToGCPValue Converts the given AudioFormat into a valid format that can be used on GCP.
+// If AudioFormat is unspecified, mp3 will be used.
+// If AudioFormat is not supported on GCP, an error is thrown.
+// Available audio formats on GCP can be seen here: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioEncoding
+func AudioFormatToGCPValue(format AudioFormat) (int, error) { // TODO use AudioEncoding type
+	switch format {
+	case AudioFormatUnspecified:
+		fallthrough
+	case AudioFormatMp3:
+		return 2, nil
+	case AudioFormatOgg:
+		return 3, nil
+	case AudioFormatLinear16:
+		return 1, nil
+	case AudioFormatMulaw:
+		return 5, nil
+	case AudioFormatAlaw:
+		return 6, nil
+	default:
+		return 0, errors.New("the specified audio format " + string(format) + " is not available on GCP. Either choose a different audio format, choose a different provider or use the TextToSpeechOptions.OutputFormatRaw property to overwrite type check.")
+	}
+}
+
+func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions, error) {
+	fmt.Println("Not yet (fully) implemented")
+
 	// TODO implement
-	return text, options
+
+	if options.OutputFormatRaw == nil {
+		outputFormatRaw, audioFormatError := AudioFormatToGCPValue(options.OutputFormat)
+		if audioFormatError != nil {
+			return text, options, audioFormatError
+		}
+		options.OutputFormatRaw = outputFormatRaw
+	}
+
+	return text, options, nil
 }
 
 func (a T2SGoogleCloudPlatform) ChooseVoice(options TextToSpeechOptions) (TextToSpeechOptions, error) {
+	fmt.Println("Not yet implemented")
 	// TODO implement
 	return options, nil
 }
 
 func (a T2SGoogleCloudPlatform) CreateClient() {
+	fmt.Println("Not yet implemented")
 	// TODO implement
+}
+
+func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
+	fmt.Println("Not yet implemented")
+	// TODO implement
+	return nil
+}
+
+func (a T2SGoogleCloudPlatform) ExecuteT2S(source string, destination string, options TextToSpeechOptions) error {
+	fmt.Println("Not yet implemented")
+	// TODO implement
+	return nil
 }

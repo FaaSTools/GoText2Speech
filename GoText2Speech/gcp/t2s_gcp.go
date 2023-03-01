@@ -17,3 +17,7 @@ func (a T2SGoogleCloudPlatform) ChooseVoice(options TextToSpeechOptions) (TextTo
 	// TODO implement
 	return options, nil
 }
+
+func (a T2SGoogleCloudPlatform) CreateClient() {
+	// TODO implement
+}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/polly"
 	. "goTest/GoText2Speech/shared"
 	"strings"
@@ -64,4 +65,11 @@ func (a T2SAmazonWebServices) ChooseVoice(options TextToSpeechOptions) (TextToSp
 	}
 
 	return options, nil
+}
+
+func (a T2SAmazonWebServices) CreateClient() {
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	a.t2sClient = polly.New(sess)
 }

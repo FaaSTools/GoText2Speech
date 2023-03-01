@@ -8,10 +8,6 @@ import (
 )
 
 import (
-	"github.com/aws/aws-sdk-go/aws/session"
-)
-
-import (
 	ts2_aws "goTest/GoText2Speech/aws"
 	ts2_gcp "goTest/GoText2Speech/gcp"
 	"goTest/GoText2Speech/providers"
@@ -89,17 +85,8 @@ func main() {
 	*/
 }
 
-func CreatePollyClient() *polly.Polly {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-
-	svc := polly.New(sess)
-	return svc
-}
-
 // T2SDirect creates text to speech input (AWS specific)
-func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechInput {
+func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechInput { // TODO change return type and add error
 
 	// error check: If the given text is supposed to be a SSML text and does not contain <speak>-tags, it is invalid.
 	if (options.TextType == TextTypeSsml) && !HasSpeakTag(text) {
@@ -123,6 +110,7 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 	}
 
 	provider := CreateProviderInstance(options.Provider)
+	provider.CreateClient()
 
 	if options.VoiceConfig.VoiceIdConfig.IsEmpty() {
 		// if both VoiceParamsConfig is undefined -> use default object
@@ -152,6 +140,7 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 
 	fmt.Println("Final Text: " + text)
 
+	// TODO provider specific
 	input2 := polly.SynthesizeSpeechInput{
 		OutputFormat: aws.String("mp3"),
 		Text:         aws.String(text),

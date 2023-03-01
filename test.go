@@ -1,8 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/polly"
+	"os"
 	"regexp"
 )
 
@@ -48,7 +49,8 @@ func main() {
 
 	fmt.Println("Synthesizing speech...")
 	s := "Hello World, how are you today? Lovely day, isn't it?"
-	T2SDirect(s, TextToSpeechOptions{
+
+	err := T2SDirect(s, "testfile.mp3", TextToSpeechOptions{
 		TextType:    TextTypeText,
 		VoiceConfig: VoiceConfig{VoiceIdConfig: VoiceIdConfig{VoiceId: "Joanna"}},
 		// Alternative voice config
@@ -57,15 +59,21 @@ func main() {
 		Pitch:        0.0,
 		Volume:       0.0,
 	})
+
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("Speech successfully synthesized!")
 }
 
 // T2SDirect creates text to speech input (AWS specific)
-func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechInput { // TODO change return type and add error
+func T2SDirect(text string, destination string, options TextToSpeechOptions) error {
 
 	// error check: If the given text is supposed to be a SSML text and does not contain <speak>-tags, it is invalid.
 	if (options.TextType == TextTypeSsml) && !HasSpeakTag(text) {
-		// TODO throw error
-		return polly.SynthesizeSpeechInput{}
+		return errors.New("invalid text. The text type was SSML, but the given text didn't contain <speak>-tags")
 	}
 
 	// if text type is auto, text type needs to be inferred
@@ -100,11 +108,9 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 			}
 		}
 
-		newOptions, err := provider.ChooseVoice(options)
-		if err != nil {
-			fmt.Print(err.Error())
-			return polly.SynthesizeSpeechInput{}
-			// TODO throw error
+		newOptions, chooseVoiceErr := provider.ChooseVoice(options)
+		if chooseVoiceErr != nil {
+			return chooseVoiceErr
 		}
 		options = newOptions
 	}
@@ -114,22 +120,14 @@ func T2SDirect(text string, options TextToSpeechOptions) polly.SynthesizeSpeechI
 	text, options, transformOptionsError = provider.TransformOptions(text, options)
 
 	if transformOptionsError != nil {
-		fmt.Print(transformOptionsError.Error())
-		return polly.SynthesizeSpeechInput{}
+		return transformOptionsError
 		// TODO throw error
 	}
 
 	fmt.Println("Final Text: " + text)
 
-	provider.ExecuteT2SDirect(text, "", options) // TODO param & return type
-
-	return polly.SynthesizeSpeechInput{} // TODO return type
-}
-
-// GetProviderInstance returns an instance of a provider struct
-func GetProviderInstance() T2SProvider {
-	// TODO via options and heuristics
-	return ts2_aws.T2SAmazonWebServices{}
+	t2sErr := provider.ExecuteT2SDirect(text, destination, options)
+	return t2sErr
 }
 
 func CreateProviderInstance(provider providers.Provider) T2SProvider {

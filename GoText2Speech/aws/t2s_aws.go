@@ -90,7 +90,7 @@ func (a T2SAmazonWebServices) ChooseVoice(options TextToSpeechOptions) (TextToSp
 	}
 
 	if !voiceFound {
-		errText := fmt.Sprintf("Error: No voice found for language %s and gender %s\n",
+		errText := fmt.Sprintf("error: No voice found for language %s and gender %s\n",
 			options.VoiceConfig.VoiceParamsConfig.LanguageCode,
 			options.VoiceConfig.VoiceParamsConfig.Gender.String())
 		return options, errors.New(errText)

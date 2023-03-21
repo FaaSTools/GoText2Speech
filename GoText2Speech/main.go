@@ -73,6 +73,14 @@ func T2SDirect(text string, destination string, options TextToSpeechOptions) err
 	return t2sErr
 }
 
+// T2S Transforms the text in the source file into speech and stores the file in destination.
+// If the given options specify a provider, this provider will be used.
+// If the given options don't specify a provider, a provider will be chosen based on heuristics.
+func T2S(source string, destination string, options TextToSpeechOptions) error {
+	// TODO implement
+	return nil
+}
+
 func CreateProviderInstance(provider providers.Provider) T2SProvider {
 	switch provider {
 	case providers.ProviderAWS:

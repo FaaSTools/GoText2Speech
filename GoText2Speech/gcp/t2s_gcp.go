@@ -29,8 +29,24 @@ func AudioFormatToGCPValue(format AudioFormat) (int, error) { // TODO use AudioE
 	case AudioFormatAlaw:
 		return 6, nil
 	default:
-		return 0, errors.New("the specified audio format " + string(format) + " is not available on GCP. Either choose a different audio format, choose a different provider or use the TextToSpeechOptions.OutputFormatRaw property to overwrite type check.")
+		return 0, errors.New("the specified audio format " + string(format) + " is not available on GCP. Either choose a different audio format, choose a different provider or use the TextToSpeechOptions.OutputFormatRaw property to bypass format check.")
 	}
+}
+
+// GCPValueToAudioFormat Reverse of AudioFormatToGCPValue function.
+// It gets a rawFormat value and returns the corresponding AudioFormat enum value.
+// If enum value couldn't be found or if the specified rawFormat is undefined/empty, an error is returned.
+func GCPValueToAudioFormat(rawFormat int) (AudioFormat, error) {
+	if rawFormat < 1 {
+		return "", errors.New("the specified rawFormat was undefined")
+	}
+	for _, audioFormat := range GetAllAudioFormats() {
+		a, _ := AudioFormatToGCPValue(audioFormat)
+		if a == rawFormat {
+			return audioFormat, nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("the specified rawFormat %d has no defined AudioFormat value.", rawFormat))
 }
 
 func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions, error) {

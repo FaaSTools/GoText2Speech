@@ -33,8 +33,24 @@ func AudioFormatToAWSValue(format AudioFormat) (string, error) {
 	case AudioFormatPcm:
 		return "pcm", nil
 	default:
-		return "", errors.New("the specified audio format " + string(format) + " is not available on AWS. Either choose a different audio format, choose a different provider or use the TextToSpeechOptions.OutputFormatRaw property to overwrite type check.")
+		return "", errors.New("the specified audio format " + string(format) + " is not available on AWS. Either choose a different audio format, choose a different provider or use the TextToSpeechOptions.OutputFormatRaw property to  format check.")
 	}
+}
+
+// AWSValueToAudioFormat Reverse of AudioFormatToAWSValue function.
+// It gets a rawFormat value and returns the corresponding AudioFormat enum value.
+// If enum value couldn't be found or if the specified rawFormat is undefined/empty, an error is returned.
+func AWSValueToAudioFormat(rawFormat string) (AudioFormat, error) {
+	if strings.EqualFold(rawFormat, "") {
+		return "", errors.New("the specified rawFormat was empty")
+	}
+	for _, audioFormat := range GetAllAudioFormats() {
+		a, _ := AudioFormatToAWSValue(audioFormat)
+		if strings.EqualFold(a, rawFormat) {
+			return audioFormat, nil
+		}
+	}
+	return "", errors.New("the specified rawFormat " + rawFormat + " has no defined AudioFormat value.")
 }
 
 // TransformOptions
@@ -133,7 +149,17 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 		return errNew
 	}
 
-	outFile, err := os.Create(destination) // TODO file extension?
+	// TODO test
+	if options.AddFileExtension {
+		audioFormat, err := AWSValueToAudioFormat(outputFormatRaw)
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			fmt.Printf("No file extension found for the specified raw audio format %s. No file extension is added to file name.\n", outputFormatRaw)
+		} else {
+			destination += AudioFormatToFileExtension(audioFormat)
+		}
+	}
+	outFile, err := os.Create(destination)
 
 	if err != nil {
 		errNew := errors.New("Error creating file: " + err.Error())
@@ -153,6 +179,6 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 }
 
 func (a T2SAmazonWebServices) ExecuteT2S(source string, destination string, options TextToSpeechOptions) error {
-
+	// TODO
 	return nil
 }

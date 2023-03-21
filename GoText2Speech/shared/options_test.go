@@ -1,6 +1,8 @@
 package shared
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestGetDefaultVoiceParamsConfig(t *testing.T) {
 	options := GetDefaultVoiceParamsConfig()

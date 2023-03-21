@@ -2,7 +2,9 @@
 
 package shared
 
-import "goTest/GoText2Speech/providers"
+import (
+	"goTest/GoText2Speech/providers"
+)
 
 type VoiceGender int16
 
@@ -123,6 +125,41 @@ const (
 	AudioFormatAlaw AudioFormat = "alaw"
 )
 
+func GetAllAudioFormats() []AudioFormat {
+	return []AudioFormat{
+		AudioFormatMp3,
+		AudioFormatOgg,
+		AudioFormatPcm,
+		AudioFormatJson,
+		AudioFormatLinear16,
+		AudioFormatMulaw,
+		AudioFormatAlaw,
+	}
+}
+
+func AudioFormatToFileExtension(audioFormat AudioFormat) string {
+	switch audioFormat {
+	case AudioFormatMp3:
+		return ".mp3"
+	case AudioFormatOgg:
+		return ".ogg"
+	case AudioFormatJson:
+		return ".json"
+	case AudioFormatPcm:
+		fallthrough
+	case AudioFormatAlaw:
+		fallthrough
+	case AudioFormatMulaw:
+		fallthrough
+	case AudioFormatLinear16:
+		return ".wav"
+	case AudioFormatUnspecified:
+		fallthrough
+	default:
+		return ""
+	}
+}
+
 type TextToSpeechOptions struct {
 	_           struct{}
 	Provider    providers.Provider
@@ -155,6 +192,10 @@ type TextToSpeechOptions struct {
 	// OutputFormatRaw is not used to figure what provider to choose. The t2s functions don't check if the value
 	// of OutputFormatRaw is allowed for the chosen provider. So, only use this property if you know what you are doing.
 	OutputFormatRaw any
+	// TODO default value for AddFileExtension
+	// TODO test?
+	// AddFileExtension If true, the appropriate file extension for the chosen OutputFormat is automatically appended to the file name.
+	AddFileExtension bool
 }
 
 // GetDefaultVoiceParamsConfig The default value for VoiceParamsConfig

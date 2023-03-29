@@ -69,6 +69,7 @@ func T2SDirect(text string, destination string, options TextToSpeechOptions) err
 
 	fmt.Println("Final Text: " + text)
 
+	// adjust provider-specific settings and execute T2S on selected provider
 	t2sErr := provider.ExecuteT2SDirect(text, destination, options)
 	return t2sErr
 }
@@ -78,6 +79,7 @@ func T2SDirect(text string, destination string, options TextToSpeechOptions) err
 // If the given options don't specify a provider, a provider will be chosen based on heuristics.
 func T2S(source string, destination string, options TextToSpeechOptions) error {
 	// TODO implement
+	// TODO move file to selected provider
 	return nil
 }
 

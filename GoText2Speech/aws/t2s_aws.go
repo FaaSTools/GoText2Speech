@@ -159,6 +159,8 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 			destination += AudioFormatToFileExtension(audioFormat)
 		}
 	}
+
+	// TODO create file on AWS S3
 	outFile, err := os.Create(destination)
 
 	if err != nil {

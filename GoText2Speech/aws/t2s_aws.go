@@ -6,9 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/polly"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	. "goTest/GoText2Speech/shared"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -122,6 +122,9 @@ func (a T2SAmazonWebServices) CreateClient() {
 	a.t2sClient = polly.New(sess)
 }
 
+// ExecuteT2SDirect executes Text-to-Speech using AWS Polly service. The given text is transformed into speech
+// using the given options. The created audio file is uploaded to AWS S3 on the given destination.
+// The destination string can either be a AWS S3 URI (starting with "s3://") or AWS S3 Object URL (starting with "https://").
 func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
 
 	outputFormatRaw, outputFormatAssertedCorrectly := options.OutputFormatRaw.(string)
@@ -161,22 +164,67 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 	}
 
 	// TODO create file on AWS S3
-	outFile, err := os.Create(destination)
+	bucket, key, destinationFormatErr := getBucketAndKeyFromAWSDestination(destination)
+	if destinationFormatErr != nil {
+		return destinationFormatErr
+	}
 
+	err = uploadFileToS3(output.AudioStream, bucket, key)
+	errClose := output.AudioStream.Close()
 	if err != nil {
-		errNew := errors.New("Error creating file: " + err.Error())
+		errNew := errors.New("Error while uploading file on AWS S3: " + err.Error())
+		fmt.Printf(errNew.Error())
+		return errNew
+	}
+	if errClose != nil {
+		errNew := errors.New("Error while closing speech synthesis audio stream: " + errClose.Error())
 		fmt.Printf(errNew.Error())
 		return errNew
 	}
 
-	defer outFile.Close()
-	_, err = io.Copy(outFile, output.AudioStream)
-	if err != nil {
-		errNew := errors.New("Error writing mp3 file: " + err.Error())
-		fmt.Printf(errNew.Error())
-		return errNew
-	}
+	return nil
+}
 
+// TODO test
+// getBucketAndKeyFromAWSDestination receives either an AWS S3 URI (starting with "s3://") or
+// AWS S3 Object URL (starting with "https://") and returns the bucket and key (without preceding slash) of the file.
+// If the given destination is not valid, then two empty strings and an error is returned.
+func getBucketAndKeyFromAWSDestination(destination string) (string, string, error) {
+	if strings.HasPrefix(destination, "s3://") {
+		withoutPrefix, _ := strings.CutPrefix(destination, "s3://")
+		bucket := strings.SplitAfter(withoutPrefix, "/")[0]
+		key, _ := strings.CutPrefix(withoutPrefix, bucket+"/")
+		return bucket, key, nil
+	} else if strings.HasPrefix(destination, "https://") && strings.Contains(destination, "s3") {
+		withoutPrefix, _ := strings.CutPrefix(destination, "s3://")
+		dotSplits := strings.SplitAfter(withoutPrefix, ".")
+		bucket := dotSplits[0]
+		key := strings.SplitAfterN(dotSplits[2], "/", 2)[1]
+		return bucket, key, nil
+	} else {
+		return "", "", errors.New(fmt.Sprintf("The given destination '%s' is not a valid S3 URI or S3 Object URL.", destination))
+	}
+}
+
+// uploadFileToS3 takes a file stream and uploads it to S3 using the given S3 bucket and key.
+// Code adapted from AWS Docs (https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#hdr-Upload_Managers)
+func uploadFileToS3(fileContents io.Reader, bucket string, key string) error {
+	// The session the S3 Uploader will use
+	sess := session.Must(session.NewSession())
+
+	// Create an uploader with the session and default options
+	uploader := s3manager.NewUploader(sess)
+
+	// Upload the file to S3.
+	result, err := uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   fileContents,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload file, %v", err)
+	}
+	fmt.Printf("file uploaded to, %s\n", result.Location)
 	return nil
 }
 

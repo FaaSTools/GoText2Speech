@@ -163,8 +163,7 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 		}
 	}
 
-	// TODO create file on AWS S3
-	bucket, key, destinationFormatErr := getBucketAndKeyFromAWSDestination(destination)
+	bucket, key, destinationFormatErr := GetBucketAndKeyFromAWSDestination(destination)
 	if destinationFormatErr != nil {
 		return destinationFormatErr
 	}
@@ -185,28 +184,27 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 	return nil
 }
 
-// TODO test
-// getBucketAndKeyFromAWSDestination receives either an AWS S3 URI (starting with "s3://") or
+// GetBucketAndKeyFromAWSDestination receives either an AWS S3 URI (starting with "s3://") or
 // AWS S3 Object URL (starting with "https://") and returns the bucket and key (without preceding slash) of the file.
 // If the given destination is not valid, then two empty strings and an error is returned.
-func getBucketAndKeyFromAWSDestination(destination string) (string, string, error) {
+func GetBucketAndKeyFromAWSDestination(destination string) (string, string, error) {
 	if strings.HasPrefix(destination, "s3://") {
 		withoutPrefix, _ := strings.CutPrefix(destination, "s3://")
-		bucket := strings.SplitAfter(withoutPrefix, "/")[0]
+		bucket := strings.Split(withoutPrefix, "/")[0]
 		key, _ := strings.CutPrefix(withoutPrefix, bucket+"/")
 		return bucket, key, nil
 	} else if strings.HasPrefix(destination, "https://") && strings.Contains(destination, "s3") {
-		withoutPrefix, _ := strings.CutPrefix(destination, "s3://")
-		dotSplits := strings.SplitAfter(withoutPrefix, ".")
+		withoutPrefix, _ := strings.CutPrefix(destination, "https://")
+		dotSplits := strings.SplitN(withoutPrefix, ".", 3)
 		bucket := dotSplits[0]
-		key := strings.SplitAfterN(dotSplits[2], "/", 2)[1]
+		key := strings.SplitN(dotSplits[2], "/", 2)[1]
 		return bucket, key, nil
 	} else {
 		return "", "", errors.New(fmt.Sprintf("The given destination '%s' is not a valid S3 URI or S3 Object URL.", destination))
 	}
 }
 
-// uploadFileToS3 takes a file stream and uploads it to S3 using the given S3 bucket and key.
+// UploadFileToS3 takes a file stream and uploads it to S3 using the given S3 bucket and key.
 // Code adapted from AWS Docs (https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#hdr-Upload_Managers)
 func uploadFileToS3(fileContents io.Reader, bucket string, key string) error {
 	// The session the S3 Uploader will use

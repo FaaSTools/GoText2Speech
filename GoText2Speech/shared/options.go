@@ -166,7 +166,7 @@ type TextToSpeechOptions struct {
 	TextType    TextType
 	VoiceConfig VoiceConfig
 	// TODO default value for SpeakingRate?
-	// TODO transform values for AWS and GCP
+	// TODO transform values for GCP
 	// SpeakingRate 1.0 is normal speed, 0.5 is half speed, 2.0 is double speed
 	SpeakingRate float64
 	// Pitch 0.0 is normal pitch, 0.05 is a little higher pitch, -0.05 a little lower pitch
@@ -189,12 +189,13 @@ type TextToSpeechOptions struct {
 	// OutputFormatRaw The raw output format that is directly given to the t2s function of the chosen provider.
 	// It can be used to overwrite the OutputFormat value and thereby bypass the type check.
 	// If this is specified, OutputFormat is ignored.
-	// OutputFormatRaw is not used to figure what provider to choose. The t2s functions don't check if the value
+	// OutputFormatRaw is not used to determine what provider to choose. The t2s functions don't check if the value
 	// of OutputFormatRaw is allowed for the chosen provider. So, only use this property if you know what you are doing.
 	OutputFormatRaw any
 	// TODO default value for AddFileExtension
 	// TODO test?
-	// AddFileExtension If true, the appropriate file extension for the chosen OutputFormat is automatically appended to the file name.
+	// AddFileExtension If true, the appropriate file extension for the chosen OutputFormat is automatically appended
+	// to the file name (only if that exact file extension is not already the suffix of the filename).
 	AddFileExtension bool
 }
 

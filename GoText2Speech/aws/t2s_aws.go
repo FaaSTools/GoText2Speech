@@ -66,8 +66,8 @@ func (a T2SAmazonWebServices) TransformOptions(text string, options TextToSpeech
 			// integrate parameters into root speak element
 			openingTag := GetOpeningTagOfSSMLText(text)
 			openingTag = IntegrateVolumeAttributeValueIntoTag(openingTag, options.Volume)
-			openingTag = IntegrateSpeakingRateAttributeValueIntoTag(openingTag, options.SpeakingRate)
-			openingTag = IntegratePitchAttributeValueIntoTag(openingTag, options.Pitch)
+			openingTag = IntegrateSpeakingRateAttributeValueIntoTag(openingTag, options.SpeakingRate*100)
+			openingTag = IntegratePitchAttributeValueIntoTag(openingTag, options.Pitch*100)
 		}
 	}
 
@@ -159,7 +159,10 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 			fmt.Printf("%s\n", err.Error())
 			fmt.Printf("No file extension found for the specified raw audio format %s. No file extension is added to file name.\n", outputFormatRaw)
 		} else {
-			destination += AudioFormatToFileExtension(audioFormat)
+			audioFormatStr := AudioFormatToFileExtension(audioFormat)
+			if !strings.HasSuffix(destination, audioFormatStr) {
+				destination += audioFormatStr
+			}
 		}
 	}
 

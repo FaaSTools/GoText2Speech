@@ -122,6 +122,23 @@ func (a T2SAmazonWebServices) CreateClient() {
 	a.t2sClient = polly.New(sess)
 }
 
+func AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFormatRaw string, destination string) (string, error) {
+	if options.AddFileExtension {
+		audioFormat, err := AWSValueToAudioFormat(outputFormatRaw)
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			errNew := errors.New(fmt.Sprintf("No file extension found for the specified raw audio format %s. No file extension is added to file name.\n", outputFormatRaw))
+			return destination, errors.Join(err, errNew)
+		} else {
+			audioFormatStr := AudioFormatToFileExtension(audioFormat)
+			if !strings.HasSuffix(destination, audioFormatStr) {
+				destination += audioFormatStr
+			}
+		}
+	}
+	return destination, nil
+}
+
 // ExecuteT2SDirect executes Text-to-Speech using AWS Polly service. The given text is transformed into speech
 // using the given options. The created audio file is uploaded to AWS S3 on the given destination.
 // The destination string can either be a AWS S3 URI (starting with "s3://") or AWS S3 Object URL (starting with "https://").
@@ -152,18 +169,10 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 		return errNew
 	}
 
-	// TODO test
-	if options.AddFileExtension {
-		audioFormat, err := AWSValueToAudioFormat(outputFormatRaw)
-		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			fmt.Printf("No file extension found for the specified raw audio format %s. No file extension is added to file name.\n", outputFormatRaw)
-		} else {
-			audioFormatStr := AudioFormatToFileExtension(audioFormat)
-			if !strings.HasSuffix(destination, audioFormatStr) {
-				destination += audioFormatStr
-			}
-		}
+	destination, err = AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, destination)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		// not a fatal error -> just resume code
 	}
 
 	bucket, key, destinationFormatErr := GetBucketAndKeyFromAWSDestination(destination)

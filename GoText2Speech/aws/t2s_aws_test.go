@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"goTest/GoText2Speech/shared"
 	"strings"
 	"testing"
 )
@@ -99,5 +100,84 @@ func TestGetBucketAndKeyFromAWSDestination(t *testing.T) {
 			t.Errorf("Expected key to be '%s', but was '%s'.", test.wantKey, resultKey)
 		}
 	}
+}
 
+func TestAddFileExtensionToDestinationIfNeededDeactivated(t *testing.T) {
+	options := shared.TextToSpeechOptions{AddFileExtension: false}
+	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
+	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1")
+
+	if err1 != nil {
+		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())
+		return
+	}
+	if err2 != nil {
+		t.Errorf("AddFileExtensionToDestinationIfNeeded returned error: %s\n", err2.Error())
+		return
+	}
+
+	if !strings.EqualFold(destination, "test1") {
+		t.Errorf("File extension was added, even though 'AddFileExtension' option was false.")
+	}
+}
+
+func TestAddFileExtensionToDestinationIfNeeded(t *testing.T) {
+	options := shared.TextToSpeechOptions{AddFileExtension: true}
+	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
+	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1")
+
+	if err1 != nil {
+		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())
+		return
+	}
+	if err2 != nil {
+		t.Errorf("AddFileExtensionToDestinationIfNeeded returned error: %s\n", err2.Error())
+		return
+	}
+
+	if strings.EqualFold(destination, "test1") {
+		t.Errorf("File extension was not added, even though 'AddFileExtension' option was true.")
+		return
+	}
+	if !strings.EqualFold(destination, "test1.mp3") {
+		t.Errorf("Wrong file extension was added. Actual value: %s\n", destination)
+	}
+}
+
+func TestAddFileExtensionToDestinationIfNeededNotNeeded(t *testing.T) {
+	options := shared.TextToSpeechOptions{AddFileExtension: true}
+	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
+	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1.mp3")
+
+	if err1 != nil {
+		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())
+		return
+	}
+	if err2 != nil {
+		t.Errorf("AddFileExtensionToDestinationIfNeeded returned error: %s\n", err2.Error())
+		return
+	}
+
+	if !strings.EqualFold(destination, "test1.mp3") {
+		t.Errorf("File extension was incorrectly added. Actual value: %s\n", destination)
+	}
+}
+
+func TestAddFileExtensionToDestinationIfNeededOtherExtension(t *testing.T) {
+	options := shared.TextToSpeechOptions{AddFileExtension: true}
+	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
+	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1.wav")
+
+	if err1 != nil {
+		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())
+		return
+	}
+	if err2 != nil {
+		t.Errorf("AddFileExtensionToDestinationIfNeeded returned error: %s\n", err2.Error())
+		return
+	}
+
+	if !strings.EqualFold(destination, "test1.wav.mp3") {
+		t.Errorf("File extension was incorrectly added. Actual value: %s\n", destination)
+	}
 }

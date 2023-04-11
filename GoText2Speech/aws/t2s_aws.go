@@ -141,7 +141,7 @@ func AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFo
 
 // ExecuteT2SDirect executes Text-to-Speech using AWS Polly service. The given text is transformed into speech
 // using the given options. The created audio file is uploaded to AWS S3 on the given destination.
-// The destination string can either be a AWS S3 URI (starting with "s3://") or AWS S3 Object URL (starting with "https://").
+// The destination string can either be an AWS S3 URI (starting with "s3://") or AWS S3 Object URL (starting with "https://").
 func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
 
 	outputFormatRaw, outputFormatAssertedCorrectly := options.OutputFormatRaw.(string)

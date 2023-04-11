@@ -165,7 +165,6 @@ type TextToSpeechOptions struct {
 	Provider    providers.Provider
 	TextType    TextType
 	VoiceConfig VoiceConfig
-	// TODO default value for SpeakingRate?
 	// TODO transform values for GCP
 	// SpeakingRate 1.0 is normal speed, 0.5 is half speed, 2.0 is double speed
 	SpeakingRate float64
@@ -192,11 +191,27 @@ type TextToSpeechOptions struct {
 	// OutputFormatRaw is not used to determine what provider to choose. The t2s functions don't check if the value
 	// of OutputFormatRaw is allowed for the chosen provider. So, only use this property if you know what you are doing.
 	OutputFormatRaw any
-	// TODO default value for AddFileExtension
-	// TODO test?
 	// AddFileExtension If true, the appropriate file extension for the chosen OutputFormat is automatically appended
 	// to the file name (only if that exact file extension is not already the suffix of the filename).
 	AddFileExtension bool
+}
+
+func GetDefaultTextToSpeechOptions() *TextToSpeechOptions {
+	return &TextToSpeechOptions{
+		Provider: providers.ProviderAWS,
+		TextType: TextTypeText,
+		VoiceConfig: VoiceConfig{
+			VoiceParamsConfig: GetDefaultVoiceParamsConfig(),
+		},
+		SpeakingRate:     1.0,
+		Pitch:            0,
+		Volume:           0,
+		AudioEffects:     nil,
+		SampleRate:       0,
+		OutputFormat:     AudioFormatUnspecified,
+		OutputFormatRaw:  nil,
+		AddFileExtension: true,
+	}
 }
 
 // GetDefaultVoiceParamsConfig The default value for VoiceParamsConfig

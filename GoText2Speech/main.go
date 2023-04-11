@@ -64,7 +64,6 @@ func T2SDirect(text string, destination string, options TextToSpeechOptions) err
 
 	if transformOptionsError != nil {
 		return transformOptionsError
-		// TODO throw error
 	}
 
 	fmt.Println("Final Text: " + text)

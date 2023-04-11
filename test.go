@@ -17,15 +17,13 @@ func main() {
 	s := "Hello World, how are you today? Lovely day, isn't it?"
 	destination := "testfile.mp3"
 
-	err := T2SDirect(s, destination, TextToSpeechOptions{
-		TextType:    TextTypeText,
-		VoiceConfig: VoiceConfig{VoiceIdConfig: VoiceIdConfig{VoiceId: "Joanna"}},
-		// Alternative voice config
-		//VoiceConfig: VoiceConfig{VoiceParamsConfig{LanguageCode: "en-US", Gender: VoiceGender_FEMALE},
-		SpeakingRate: 1.1,
-		Pitch:        0.0,
-		Volume:       0.0,
-	})
+	options := GetDefaultTextToSpeechOptions()
+	options.VoiceConfig.VoiceIdConfig = VoiceIdConfig{VoiceId: "Joanna"}
+	// Alternative voice config
+	//options.VoiceConfig.VoiceParamsConfig = VoiceParamsConfig{LanguageCode: "en-US", Gender: VoiceGenderFemale}
+	options.SpeakingRate = 1.1
+
+	err := T2SDirect(s, destination, *options)
 
 	if err != nil {
 		fmt.Println(err.Error())

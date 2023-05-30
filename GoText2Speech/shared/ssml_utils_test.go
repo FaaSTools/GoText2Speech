@@ -60,6 +60,13 @@ func TestGetOpeningTagOfSSMLTextNormal(t *testing.T) {
 	if want != result {
 		t.Errorf("Opening tag was not correctly retrieved.\nWatend:\t%s\nGot:\t%s", want, result)
 	}
+
+	input = "<speak><prosody>Hello World</prosody></speak>"
+	want = "<speak>"
+	result = GetOpeningTagOfSSMLText(input)
+	if want != result {
+		t.Errorf("Opening tag was not correctly retrieved.\nWatend:\t%s\nGot:\t%s", want, result)
+	}
 }
 
 func TestGetOpeningTagOfSSMLTextWithAttributes(t *testing.T) {
@@ -77,6 +84,38 @@ func TestGetOpeningTagOfSSMLTextWithoutTag(t *testing.T) {
 	result := GetOpeningTagOfSSMLText(input)
 	if want != result {
 		t.Errorf("Non-existing opening tag was not correctly handled.\nWatend:\t%s\nGot:\t%s", want, result)
+	}
+}
+
+func TestRemoveOpeningTagOfSSMLText(t *testing.T) {
+	input := "<speak>text</speak>"
+	want := "text</speak>"
+	result := RemoveOpeningTagOfSSMLText(input)
+	if want != result {
+		t.Errorf("Opening SSML tag was not properly removed.\nWanted:\t%s\nGot:\t%s", want, result)
+	}
+
+	input = "<speak><prosody>text</prosody></speak>"
+	want = "<prosody>text</prosody></speak>"
+	result = RemoveOpeningTagOfSSMLText(input)
+	if want != result {
+		t.Errorf("Opening SSML tag was not properly removed.\nWanted:\t%s\nGot:\t%s", want, result)
+	}
+}
+
+func TestRemoveClosingSpeakTagOfSSMLText(t *testing.T) {
+	input := "<speak>text</speak>"
+	want := "<speak>text"
+	result := RemoveClosingSpeakTagOfSSMLText(input)
+	if want != result {
+		t.Errorf("Closing SSML tag was not properly removed.\nWanted:\t%s\nGot:\t%s", want, result)
+	}
+
+	input = "<speak><prosody>text</prosody></speak>"
+	want = "<speak><prosody>text</prosody>"
+	result = RemoveClosingSpeakTagOfSSMLText(input)
+	if want != result {
+		t.Errorf("Closing SSML tag was not properly removed.\nWanted:\t%s\nGot:\t%s", want, result)
 	}
 }
 

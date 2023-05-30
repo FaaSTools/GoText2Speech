@@ -43,13 +43,15 @@ func (voiceGender VoiceGender) String() string {
 	}
 }
 
-// VoiceIdConfig Defines the voice ID that should be used for speech synthesis.
+// VoiceIdConfig Defines the voice ID and Engine that should be used for speech synthesis.
 // A voice ID indirectly specifies the gender and language of a voice.
 // For example, the voice ID "Joanna" is a female en-US voice for AWS.
 // Generally, voice IDs are different for different providers
 // (i.e. the voice ID "Joanna" exists for AWS, but not GCP).
+// If the Engine parameter is left empty, the default engine of the chosen provider will be used.
 type VoiceIdConfig struct {
 	VoiceId string
+	Engine  string
 }
 
 // VoiceParamsConfig Defines parameters of a voice that should be used for speech synthesis.
@@ -58,6 +60,7 @@ type VoiceParamsConfig struct {
 	// country code) for filtering the list of voices returned.
 	LanguageCode string
 	Gender       VoiceGender
+	Engine       string
 }
 
 type TextType string
@@ -78,19 +81,21 @@ func (t TextType) String() string {
 
 // VoiceConfig Either specify VoiceIdConfig or VoiceParamsConfig.
 // When VoiceIdConfig is specified with its VoiceIdConfig.VoiceId value, the voice with the specified VoiceId is used
-// and VoiceParamsConfig gets ignored.
+// and VoiceParamsConfig gets ignored. In that case, the optional VoiceIdConfig.Engine specifies the voice engine to use.
+// If no engine is specified (i.e. empty string), the default engine for the provider is used.
 // The T2S function doesn't check if the VoiceId actually exists. So if the VoiceId doesn't exist for the specified
 // provider, the provider's error is thrown.
 //
 // When VoiceIdConfig is undefined or empty (see VoiceIdConfig.IsEmpty function), then a voice based on the
 // VoiceParamsConfig is selected.
-// VoiceParamsConfig specifies the language and gender of the voice that should be used. The T2S function automatically
-// chooses the first voice id with the specified language and gender parameters.
+// VoiceParamsConfig specifies the language, gender and engine of the voice that should be selected. The T2S function automatically
+// chooses the first voice id with the specified language, gender and engine parameters.
 // TODO error handling? Language not available? Gender not available?
 //
 // If VoiceParamsConfig is undefined as well, the default value from GetDefaultVoiceParamsConfig is used.
 // If one of the properties of VoiceParamsConfig is undefined (empty string for LanguageCode and VoiceGenderUnspecified
 // for Gender), the corresponding value from GetDefaultVoiceParamsConfig is used.
+// If the Engine parameter is undefined (empty string), engine will be ignored for choosing voice.
 type VoiceConfig struct {
 	_                 struct{}
 	VoiceIdConfig     VoiceIdConfig
@@ -199,7 +204,7 @@ type TextToSpeechOptions struct {
 func GetDefaultTextToSpeechOptions() *TextToSpeechOptions {
 	return &TextToSpeechOptions{
 		Provider: providers.ProviderAWS,
-		TextType: TextTypeText,
+		TextType: TextTypeAuto,
 		VoiceConfig: VoiceConfig{
 			VoiceParamsConfig: GetDefaultVoiceParamsConfig(),
 		},
@@ -219,9 +224,12 @@ func GetDefaultVoiceParamsConfig() VoiceParamsConfig {
 	return VoiceParamsConfig{
 		LanguageCode: "en-US",
 		Gender:       VoiceGenderMale,
+		Engine:       "",
 	}
 }
 
+// IsEmpty checks if VoiceIdConfig.VoiceId is defined.
+// Since the VoiceIdConfig.Engine parameter is optional, its presence doesn't make the VoiceIdConfig not-empty.
 func (config VoiceIdConfig) IsEmpty() bool {
 	return (config == (VoiceIdConfig{})) || (config.VoiceId == "")
 }

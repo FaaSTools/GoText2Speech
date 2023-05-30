@@ -6,6 +6,108 @@ import (
 	"testing"
 )
 
+func TestTransformOptions(t *testing.T) {
+	provider := T2SAmazonWebServices{}
+	options := shared.GetDefaultTextToSpeechOptions()
+	options.TextType = shared.TextTypeText
+
+	type TestData struct {
+		input    string
+		want     string
+		volume   float64
+		rate     float64
+		pitch    float64
+		textType shared.TextType
+	}
+
+	testData := []TestData{
+		{
+			input:    "Hello World!",
+			want:     "Hello World!",
+			volume:   options.Volume,
+			rate:     options.SpeakingRate,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeText,
+		},
+		{
+			input:    "Hello & World!",
+			want:     "Hello & World!",
+			volume:   options.Volume,
+			rate:     options.SpeakingRate,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeText,
+		},
+		{
+			input:    "Hello World!",
+			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello World!</prosody></speak>",
+			volume:   options.Volume,
+			rate:     1.1,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeText,
+		},
+		{
+			input:    "Hello & World!",
+			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello &amp; World!</prosody></speak>",
+			volume:   options.Volume,
+			rate:     1.1,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeText,
+		},
+		{
+			input:    "<speak>Hello World!</speak>",
+			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello World!</prosody></speak>",
+			volume:   options.Volume,
+			rate:     1.1,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeSsml,
+		},
+		{
+			input:    "<speak>Hello & World!</speak>",
+			want:     "<speak>Hello & World!</speak>",
+			volume:   options.Volume,
+			rate:     options.SpeakingRate,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeSsml,
+		},
+		{
+			input:    "<speak>Hello & World!</speak>",
+			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello & World!</prosody></speak>",
+			volume:   options.Volume,
+			rate:     1.1,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeSsml,
+		},
+		{
+			input:    "<speak><prosody rate=\"90%\">Hello World!</prosody></speak>",
+			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\"><prosody rate=\"90%\">Hello World!</prosody></prosody></speak>",
+			volume:   options.Volume,
+			rate:     1.1,
+			pitch:    options.Pitch,
+			textType: shared.TextTypeSsml,
+		},
+		{
+			input:    "<speak>Hello World!</speak>",
+			want:     "<speak><prosody volume=\"10.000db\" pitch=\"-5.000%\" rate=\"95.000%\">Hello World!</prosody></speak>",
+			volume:   10,
+			rate:     0.95,
+			pitch:    -0.05,
+			textType: shared.TextTypeSsml,
+		},
+	}
+
+	for _, test := range testData {
+		options.Volume = test.volume
+		options.SpeakingRate = test.rate
+		options.Pitch = test.pitch
+		options.TextType = test.textType
+		result, _, _ := provider.TransformOptions(test.input, *options)
+
+		if result != test.want {
+			t.Errorf("TransformOptions returned incorrect result for SSML text transformation. Value: '%s'. Wanted: '%s'.", result, test.want)
+		}
+	}
+}
+
 func TestGetBucketAndKeyFromAWSDestination(t *testing.T) {
 
 	type TestData struct {

@@ -7,7 +7,8 @@ import (
 )
 
 type T2SGoogleCloudPlatform struct {
-	t2sClient any // TODO set correct type
+	credentials CredentialsHolder
+	t2sClient   any // TODO set correct type
 }
 
 // AudioFormatToGCPValue Converts the given AudioFormat into a valid format that can be used on GCP.
@@ -71,9 +72,10 @@ func (a T2SGoogleCloudPlatform) ChooseVoice(options TextToSpeechOptions) (TextTo
 	return options, nil
 }
 
-func (a T2SGoogleCloudPlatform) CreateClient() {
+func (a T2SGoogleCloudPlatform) CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider {
 	fmt.Println("Not yet implemented")
 	// TODO implement
+	return a
 }
 
 func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {

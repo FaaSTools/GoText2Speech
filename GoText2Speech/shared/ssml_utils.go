@@ -18,34 +18,45 @@ func HasSpeakTag(text string) bool {
 // This function expects there to be an opening tag, i.e. <speak>.
 // If it cannot be expected that the given text always contains an opening tag, use HasSpeakTag to check for an opening tag.
 // Example 1: "<speak>...</speak>" -> "<speak>"
-// Example 2: "<speak volume="10db">...</speak>" -> "<speak volume="10db">"
+// Example 2: "<speak attr1="test">...</speak>" -> "<speak attr1="test">"
 // Example 3: "Hello World" -> "Hello World"
 func GetOpeningTagOfSSMLText(text string) string {
 	return strings.SplitAfter(text, ">")[0]
 }
 
+func RemoveClosingSpeakTagOfSSMLText(text string) string {
+	newText, _ := strings.CutSuffix(text, "</speak>")
+	return newText
+}
+
+// RemoveOpeningTagOfSSMLText Returns the given SSML text without the opening tag (i.e. opening of root node, <speak>).
+// Requires that an opening tag exists. Otherwise, will return unexpected value.
+func RemoveOpeningTagOfSSMLText(text string) string {
+	return strings.SplitAfterN(text, ">", 2)[1]
+}
+
 func VolumeToSSMLAttribute(volume float64) string {
-	return fmt.Sprintf("volume=\"%fdb\"", volume)
+	return fmt.Sprintf("volume=\"%.3fdb\"", volume)
 }
 
 func PitchToSSMLAttribute(pitch float64) string {
-	return fmt.Sprintf("pitch=\"%f%%\"", pitch*100.0)
+	return fmt.Sprintf("pitch=\"%.3f%%\"", pitch*100.0)
 }
 
 func RateToSSMLAttribute(rate float64) string {
-	return fmt.Sprintf("rate=\"%f%%\"", rate*100.0)
+	return fmt.Sprintf("rate=\"%.3f%%\"", rate*100.0)
+}
+
+func CreateProsodyTag(options TextToSpeechOptions) string {
+	return fmt.Sprintf("<prosody %s %s %s>", VolumeToSSMLAttribute(options.Volume), PitchToSSMLAttribute(options.Pitch), RateToSSMLAttribute(options.SpeakingRate))
 }
 
 // TransformTextIntoSSML escapes special characters and wraps text into speak-tag with volume, pitch and rate parameters.
 // Example: Hello World -> <speak volume="0db" rate="0%" pitch="0%">Hello World</speak>
 func TransformTextIntoSSML(text string, options TextToSpeechOptions) string {
 	text = EscapeTextForSSML(text)
-	openingTag := fmt.Sprintf("<speak %s %s %s>",
-		VolumeToSSMLAttribute(options.Volume),
-		PitchToSSMLAttribute(options.Pitch),
-		RateToSSMLAttribute(options.SpeakingRate))
-
-	return openingTag + text + "</speak>"
+	prosodyTag := CreateProsodyTag(options)
+	return "<speak>" + prosodyTag + text + "</prosody></speak>"
 }
 
 // EscapeTextForSSML In order to use text in SSML, it needs to be escaped.

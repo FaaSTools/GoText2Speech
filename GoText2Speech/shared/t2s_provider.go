@@ -6,8 +6,7 @@ type T2SProvider interface {
 	// ChooseVoice chooses a voice that is available on the provider based on the given parameters (language and gender).
 	ChooseVoice(options TextToSpeechOptions) (TextToSpeechOptions, error)
 	// CreateServiceClient creates t2s client for the chosen provider and stores it in the struct.
-	CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider // TODO parameters?
+	CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider
 	ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error
 	ExecuteT2S(source string, destination string, options TextToSpeechOptions) error
-	// TODO close function for client?
 }

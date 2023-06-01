@@ -174,24 +174,21 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 		return outputFormatError
 	}
 
-	engine := "standard"
-	if !strings.EqualFold("", options.VoiceConfig.VoiceIdConfig.Engine) {
-		engine = options.VoiceConfig.VoiceIdConfig.Engine
-	}
 	speechInput := &polly.SynthesizeSpeechInput{
 		OutputFormat: aws.String(outputFormatRaw),
 		Text:         aws.String(text),
 		VoiceId:      aws.String(options.VoiceConfig.VoiceIdConfig.VoiceId),
 		TextType:     aws.String(options.TextType.String()),
-		Engine:       &engine,
 	}
-
+	if !strings.EqualFold("", options.VoiceConfig.VoiceIdConfig.Engine) {
+		speechInput.SetEngine(options.VoiceConfig.VoiceIdConfig.Engine)
+	}
 	if options.SampleRate != 0 {
 		speechInput.SetSampleRate(fmt.Sprintf("%d", options.SampleRate))
 	}
 
-	fmt.Printf("%p\n", a.t2sClient)
-	fmt.Printf("%t\n", a.t2sClient == nil)
+	//fmt.Printf("%p\n", a.t2sClient)
+	//fmt.Printf("%t\n", a.t2sClient == nil)
 	output, err := a.t2sClient.SynthesizeSpeech(speechInput)
 
 	if err != nil {

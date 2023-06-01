@@ -68,7 +68,6 @@ type TextType string
 const (
 	// TextTypeSsml is a TextType enum value
 	TextTypeSsml TextType = "ssml"
-
 	// TextTypeText is a TextType enum value
 	TextTypeText TextType = "text"
 	// TextTypeAuto is a TextType enum value
@@ -191,7 +190,7 @@ type TextToSpeechOptions struct {
 	// GCP Doc: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioEncoding
 	OutputFormat AudioFormat
 	// OutputFormatRaw The raw output format that is directly given to the t2s function of the chosen provider.
-	// It can be used to overwrite the OutputFormat value and thereby bypass the type check.
+	// It can be used to overwrite the OutputFormat value and thereby bypass the enum type check.
 	// If this is specified, OutputFormat is ignored.
 	// OutputFormatRaw is not used to determine what provider to choose. The t2s functions don't check if the value
 	// of OutputFormatRaw is allowed for the chosen provider. So, only use this property if you know what you are doing.

@@ -3,7 +3,8 @@ package GoText2Speech
 import (
 	"errors"
 	"fmt"
-	"github.com/FaaSTools/GoStorage/gostorage"
+	// "github.com/FaaSTools/GoStorage/gostorage"
+	"github.com/dave-meyer/GoStorage/gostorage"
 	ts2_aws "goTest/GoText2Speech/aws"
 	ts2_gcp "goTest/GoText2Speech/gcp"
 	"goTest/GoText2Speech/providers"

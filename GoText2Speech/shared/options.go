@@ -174,7 +174,7 @@ type TextToSpeechOptions struct {
 	SpeakingRate float64
 	// Pitch 0.0 is normal pitch, 0.05 is a little higher pitch, -0.05 a little lower pitch
 	Pitch float64
-	// Volume increase in db. 0.0 is normal, 6.0 is approximately double the normal volume, -6.0 is half the normal volume
+	// Volume increase in dB. 0.0 is normal, 6.0 is approximately double the normal volume, -6.0 is half the normal volume
 	Volume float64
 	// AudioEffects only available on Google Cloud Platform.
 	// See documentation for more information: https://cloud.google.com/text-to-speech/docs/audio-profiles

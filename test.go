@@ -26,7 +26,7 @@ func main() {
 	options.VoiceConfig.VoiceIdConfig = VoiceIdConfig{VoiceId: "Salli", Engine: "neural"}
 
 	var err error = nil
-	t2sClient, err = t2sClient.T2SDirect("<speak><prosody rate=\"110.000%\">Hello World, how are you today? Lovely day, isn't it?</prosody></speak>", "s3://davemeyer-test/testfile.mp3", *options)
+	t2sClient, err = t2sClient.T2SDirect("<speak><prosody volume=\"10.000dB\">Hello World, how are you today? Lovely day, isn't it?</prosody></speak>", "s3://davemeyer-test/testfile.mp3", *options)
 	t2sClient, err = t2sClient.T2SDirect("Test", "s3://davemeyer-test/testfile_02.mp3", *options)
 	t2sClient, err = t2sClient.T2S("https://www.davemeyer.io/GoSpeechLess/T2S_Test_file_01.txt", "s3://davemeyer-test/testfile_03.mp3", *options)
 

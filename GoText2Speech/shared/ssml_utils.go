@@ -36,7 +36,7 @@ func RemoveOpeningTagOfSSMLText(text string) string {
 }
 
 func VolumeToSSMLAttribute(volume float64) string {
-	return fmt.Sprintf("volume=\"%.3fdb\"", volume)
+	return fmt.Sprintf("volume=\"%.3fdB\"", volume)
 }
 
 func PitchToSSMLAttribute(pitch float64) string {
@@ -52,7 +52,7 @@ func CreateProsodyTag(options TextToSpeechOptions) string {
 }
 
 // TransformTextIntoSSML escapes special characters and wraps text into speak-tag with volume, pitch and rate parameters.
-// Example: Hello World -> <speak volume="0db" rate="0%" pitch="0%">Hello World</speak>
+// Example: Hello World -> <speak volume="0dB" rate="0%" pitch="0%">Hello World</speak>
 func TransformTextIntoSSML(text string, options TextToSpeechOptions) string {
 	text = EscapeTextForSSML(text)
 	prosodyTag := CreateProsodyTag(options)
@@ -79,19 +79,19 @@ func EscapeTextForSSML(text string) string {
 // IntegrateVolumeAttributeValueIntoTag integrates a value for the volume attribute into an existing <speak>-tag.
 // Returns new opening speak tag.
 // Following examples with volumeValue of 10:
-// Example 1: <speak> -> <speak volume="10db">
-// Example 2: <speak rate="10%"> -> <speak rate="10%" volume="10db">
-// Example 3: <speak volume="5db"> -> <speak volume="15db">
-// Example 4: <speak volume="loud"> -> <speak volume="10db">
+// Example 1: <speak> -> <speak volume="10dB">
+// Example 2: <speak rate="10%"> -> <speak rate="10%" volume="10dB">
+// Example 3: <speak volume="5dB"> -> <speak volume="15dB">
+// Example 4: <speak volume="loud"> -> <speak volume="10dB">
 func IntegrateVolumeAttributeValueIntoTag(openingTag string, volumeValue float64) string {
-	return integrateAttributeValueIntoTag(openingTag, volumeValue, "volume", "db")
+	return integrateAttributeValueIntoTag(openingTag, volumeValue, "volume", "dB")
 }
 
 // IntegrateSpeakingRateAttributeValueIntoTag integrates a value for the speaking rate attribute into an existing <speak>-tag.
 // Returns new opening speak tag.
 // Following examples with speakingRateValue of 10:
 // Example 1: <speak> -> <speak rate="10%">
-// Example 2: <speak volume="5db"> -> <speak volume="5db" rate="10%">
+// Example 2: <speak volume="5dB"> -> <speak volume="5dB" rate="10%">
 // Example 3: <speak rate="5%"> -> <speak rate="15%">
 // Example 4: <speak rate="fast"> -> <speak rate="10%">
 func IntegrateSpeakingRateAttributeValueIntoTag(openingTag string, speakingRateValue float64) string {
@@ -102,7 +102,7 @@ func IntegrateSpeakingRateAttributeValueIntoTag(openingTag string, speakingRateV
 // Returns new opening speak tag.
 // Following examples with pitchValue of 10:
 // Example 1: <speak> -> <speak pitch="10%">
-// Example 2: <speak volume="5db"> -> <speak volume="5db" pitch="10%">
+// Example 2: <speak volume="5dB"> -> <speak volume="5dB" pitch="10%">
 // Example 3: <speak pitch="5%"> -> <speak pitch="15%">
 // Example 4: <speak pitch="high"> -> <speak pitch="10%">
 func IntegratePitchAttributeValueIntoTag(openingTag string, pitchValue float64) string {

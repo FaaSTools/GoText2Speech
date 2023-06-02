@@ -124,7 +124,7 @@ func TestRemoveClosingSpeakTagOfSSMLText(t *testing.T) {
 func TestTransformTextIntoSSMLNormal(t *testing.T) {
 	options := TextToSpeechOptions{Volume: 10.0, SpeakingRate: 2.0, Pitch: 0.05}
 	input := "Hello World! Lovely day, isn't it?"
-	want := "<speak volume=\"10.000000db\" pitch=\"5.000000%\" rate=\"200.000000%\">Hello World! Lovely day, isn&apos;t it?</speak>"
+	want := "<speak volume=\"10.000000dB\" pitch=\"5.000000%\" rate=\"200.000000%\">Hello World! Lovely day, isn&apos;t it?</speak>"
 	result := TransformTextIntoSSML(input, options)
 	if want != result {
 		t.Errorf("Text was not properly transformed into SSML.\nWanted:\t%s\nGot:\t%s", want, result)
@@ -140,10 +140,10 @@ type testcase struct {
 func TestIntegrateVolumeAttributeValueIntoTag(t *testing.T) {
 	volumeValueDb := 10.0
 	var inputs = []testcase{
-		{"Normal", "<speak>", fmt.Sprintf("<speak volume=\"%fdb\">", volumeValueDb)},
-		{"Additional Attribute", "<speak rate=\"10%\">", fmt.Sprintf("<speak rate=\"10%%\" volume=\"%fdb\">", volumeValueDb)},
-		{"Integrate and add", "<speak volume=\"5db\">", fmt.Sprintf("<speak volume=\"%fdb\">", volumeValueDb+5)},
-		{"Integrate and overwrite", "<speak volume=\"loud\">", fmt.Sprintf("<speak volume=\"%fdb\">", volumeValueDb)},
+		{"Normal", "<speak>", fmt.Sprintf("<speak volume=\"%fdB\">", volumeValueDb)},
+		{"Additional Attribute", "<speak rate=\"10%\">", fmt.Sprintf("<speak rate=\"10%%\" volume=\"%fdB\">", volumeValueDb)},
+		{"Integrate and add", "<speak volume=\"5dB\">", fmt.Sprintf("<speak volume=\"%fdB\">", volumeValueDb+5)},
+		{"Integrate and overwrite", "<speak volume=\"loud\">", fmt.Sprintf("<speak volume=\"%fdB\">", volumeValueDb)},
 	}
 
 	for _, testcase := range inputs {
@@ -160,7 +160,7 @@ func TestIntegratePitchAttributeValueIntoTag(t *testing.T) {
 	pitchValue := 10.0
 	var inputs = []testcase{
 		{"Normal", "<speak>", fmt.Sprintf("<speak pitch=\"%f%%\">", pitchValue)},
-		{"Additional Attribute", "<speak volume=\"5db\">", fmt.Sprintf("<speak volume=\"5db\" pitch=\"%f%%\">", pitchValue)},
+		{"Additional Attribute", "<speak volume=\"5dB\">", fmt.Sprintf("<speak volume=\"5dB\" pitch=\"%f%%\">", pitchValue)},
 		{"Integrate and add", "<speak pitch=\"5%\">", fmt.Sprintf("<speak pitch=\"%f%%\">", pitchValue+5)},
 		{"Integrate and overwrite", "<speak pitch=\"high\">", fmt.Sprintf("<speak pitch=\"%f%%\">", pitchValue)},
 	}
@@ -179,7 +179,7 @@ func TestIntegrateSpeakingRateAttributeValueIntoTag(t *testing.T) {
 	speakingRateValue := 10.0
 	var inputs = []testcase{
 		{"Normal", "<speak>", fmt.Sprintf("<speak rate=\"%f%%\">", speakingRateValue)},
-		{"Additional Attribute", "<speak volume=\"5db\">", fmt.Sprintf("<speak volume=\"5db\" rate=\"%f%%\">", speakingRateValue)},
+		{"Additional Attribute", "<speak volume=\"5dB\">", fmt.Sprintf("<speak volume=\"5dB\" rate=\"%f%%\">", speakingRateValue)},
 		{"Integrate and add", "<speak rate=\"5%\">", fmt.Sprintf("<speak rate=\"%f%%\">", speakingRateValue+5)},
 		{"Integrate and overwrite", "<speak rate=\"fast\">", fmt.Sprintf("<speak rate=\"%f%%\">", speakingRateValue)},
 	}

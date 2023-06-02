@@ -39,7 +39,7 @@ func TestTransformOptions(t *testing.T) {
 		},
 		{
 			input:    "Hello World!",
-			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello World!</prosody></speak>",
+			want:     "<speak><prosody volume=\"0.000dB\" pitch=\"0.000%\" rate=\"110.000%\">Hello World!</prosody></speak>",
 			volume:   options.Volume,
 			rate:     1.1,
 			pitch:    options.Pitch,
@@ -47,7 +47,7 @@ func TestTransformOptions(t *testing.T) {
 		},
 		{
 			input:    "Hello & World!",
-			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello &amp; World!</prosody></speak>",
+			want:     "<speak><prosody volume=\"0.000dB\" pitch=\"0.000%\" rate=\"110.000%\">Hello &amp; World!</prosody></speak>",
 			volume:   options.Volume,
 			rate:     1.1,
 			pitch:    options.Pitch,
@@ -55,7 +55,7 @@ func TestTransformOptions(t *testing.T) {
 		},
 		{
 			input:    "<speak>Hello World!</speak>",
-			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello World!</prosody></speak>",
+			want:     "<speak><prosody volume=\"0.000dB\" pitch=\"0.000%\" rate=\"110.000%\">Hello World!</prosody></speak>",
 			volume:   options.Volume,
 			rate:     1.1,
 			pitch:    options.Pitch,
@@ -71,7 +71,7 @@ func TestTransformOptions(t *testing.T) {
 		},
 		{
 			input:    "<speak>Hello & World!</speak>",
-			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\">Hello & World!</prosody></speak>",
+			want:     "<speak><prosody volume=\"0.000dB\" pitch=\"0.000%\" rate=\"110.000%\">Hello & World!</prosody></speak>",
 			volume:   options.Volume,
 			rate:     1.1,
 			pitch:    options.Pitch,
@@ -79,7 +79,7 @@ func TestTransformOptions(t *testing.T) {
 		},
 		{
 			input:    "<speak><prosody rate=\"90%\">Hello World!</prosody></speak>",
-			want:     "<speak><prosody volume=\"0.000db\" pitch=\"0.000%\" rate=\"110.000%\"><prosody rate=\"90%\">Hello World!</prosody></prosody></speak>",
+			want:     "<speak><prosody volume=\"0.000dB\" pitch=\"0.000%\" rate=\"110.000%\"><prosody rate=\"90%\">Hello World!</prosody></prosody></speak>",
 			volume:   options.Volume,
 			rate:     1.1,
 			pitch:    options.Pitch,
@@ -87,7 +87,7 @@ func TestTransformOptions(t *testing.T) {
 		},
 		{
 			input:    "<speak>Hello World!</speak>",
-			want:     "<speak><prosody volume=\"10.000db\" pitch=\"-5.000%\" rate=\"95.000%\">Hello World!</prosody></speak>",
+			want:     "<speak><prosody volume=\"10.000dB\" pitch=\"-5.000%\" rate=\"95.000%\">Hello World!</prosody></speak>",
 			volume:   10,
 			rate:     0.95,
 			pitch:    -0.05,

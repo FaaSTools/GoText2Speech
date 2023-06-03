@@ -68,11 +68,11 @@ func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpee
 }
 
 func (a T2SGoogleCloudPlatform) IsURLonOwnStorage(url string) bool {
-	// TODO
-	return false
+	return IsGoogleUrl(url)
 }
 
 func (a T2SGoogleCloudPlatform) CreateTempDestination(goT2SClient GoText2Speech.GoT2SClient, fileName string) string {
+	fmt.Println("Not yet implemented")
 	// TODO
 	return ""
 }

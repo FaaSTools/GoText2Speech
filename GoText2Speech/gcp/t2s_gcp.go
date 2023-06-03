@@ -3,6 +3,7 @@ package gcp
 import (
 	"errors"
 	"fmt"
+	"goTest/GoText2Speech"
 	. "goTest/GoText2Speech/shared"
 )
 
@@ -64,6 +65,16 @@ func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpee
 	}
 
 	return text, options, nil
+}
+
+func (a T2SGoogleCloudPlatform) IsURLonOwnStorage(url string) bool {
+	// TODO
+	return false
+}
+
+func (a T2SGoogleCloudPlatform) CreateTempDestination(goT2SClient GoText2Speech.GoT2SClient, fileName string) string {
+	// TODO
+	return ""
 }
 
 func (a T2SGoogleCloudPlatform) ChooseVoice(options TextToSpeechOptions) (TextToSpeechOptions, error) {

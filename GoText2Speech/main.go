@@ -12,9 +12,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 )
 
 type GoT2SClient struct {
@@ -114,11 +112,10 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 	fmt.Println("Final Text: " + text)
 
 	providerDestination := destination
-	if !IsAWSUrl(destination) && (options.Provider == providers.ProviderAWS) { // TODO as provider function
+	if provider.IsURLonOwnStorage(destination) {
 		splits := strings.Split(destination, "/")
 		fileName := splits[len(splits)-1]
-		now := time.Now()
-		providerDestination = "https://" + a.AwsTempBucket + ".s3.amazonaws.com/" + fileName + strconv.FormatInt(now.UnixNano(), 10)
+		providerDestination = provider.CreateTempDestination(a, fileName)
 	}
 
 	// adjust provider-specific settings and execute T2S on selected provider

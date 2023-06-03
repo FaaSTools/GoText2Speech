@@ -8,9 +8,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/polly"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"goTest/GoText2Speech"
 	. "goTest/GoText2Speech/shared"
 	"io"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type T2SAmazonWebServices struct {
@@ -54,6 +57,15 @@ func AWSValueToAudioFormat(rawFormat string) (AudioFormat, error) {
 		}
 	}
 	return "", errors.New("the specified rawFormat " + rawFormat + " has no defined AudioFormat value.")
+}
+
+func (a T2SAmazonWebServices) IsURLonOwnStorage(url string) bool {
+	return IsAWSUrl(url)
+}
+
+func (a T2SAmazonWebServices) CreateTempDestination(goT2SClient GoText2Speech.GoT2SClient, fileName string) string {
+	now := time.Now()
+	return "https://" + goT2SClient.AwsTempBucket + ".s3.amazonaws.com/" + fileName + strconv.FormatInt(now.UnixNano(), 10)
 }
 
 // TransformOptions

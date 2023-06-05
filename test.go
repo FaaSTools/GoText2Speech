@@ -31,7 +31,6 @@ func main() {
 	t2sClient, err = t2sClient.T2SDirect("Test", "s3://davemeyer-test/testfile_02.mp3", *options)
 	t2sClient, err = t2sClient.T2S("https://www.davemeyer.io/GoSpeechLess/T2S_Test_file_01.txt", "s3://davemeyer-test/testfile_03.mp3", *options)
 
-	//t2sClient.AwsTempBucket = "davemeyer-test"
 	t2sClient.SetTempBucket(providers.ProviderAWS, "davemeyer-test")
 	//t2sClient, err = t2sClient.T2S("https://davemeyer-test.s3.amazonaws.com/T2S_Test_file_01.txt", "D:\\testfile_04.mp3", *options)
 	// TODO GCP example

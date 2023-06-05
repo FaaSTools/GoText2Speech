@@ -3,8 +3,8 @@ package shared
 import (
 	"errors"
 	"fmt"
-	//gostorage "github.com/FaaSTools/GoStorage/gostorage"
-	gostorage "github.com/dave-meyer/GoStorage/gostorage"
+	gostorage "github.com/FaaSTools/GoStorage/gostorage"
+	//gostorage "github.com/dave-meyer/GoStorage/gostorage"
 	"os"
 	"strings"
 )

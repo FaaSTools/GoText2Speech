@@ -3,9 +3,9 @@ module goTest
 go 1.19
 
 require (
-	//github.com/FaaSTools/GoStorage v0.0.0-00010101000000-000000000000
+	github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
 	github.com/aws/aws-sdk-go v1.44.199
-	github.com/dave-meyer/GoStorage v0.0.0-20230601102518-06972751a46f
+//github.com/dave-meyer/GoStorage v0.0.0-20230601102518-06972751a46f
 )
 
 require (

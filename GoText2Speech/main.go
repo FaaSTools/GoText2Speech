@@ -3,8 +3,8 @@ package GoText2Speech
 import (
 	"errors"
 	"fmt"
-	// "github.com/FaaSTools/GoStorage/gostorage"
-	"github.com/dave-meyer/GoStorage/gostorage"
+	"github.com/FaaSTools/GoStorage/gostorage"
+	//"github.com/dave-meyer/GoStorage/gostorage"
 	ts2_aws "goTest/GoText2Speech/aws"
 	ts2_gcp "goTest/GoText2Speech/gcp"
 	"goTest/GoText2Speech/providers"
@@ -17,31 +17,27 @@ import (
 
 type GoT2SClient struct {
 	providerInstances map[providers.Provider]*T2SProvider
-	//awsProvider     T2SProvider
-	//gcpProvider     T2SProvider
-	region      string
-	credentials CredentialsHolder
-	tempBuckets map[providers.Provider]string
-	//AwsTempBucket   string
-	//GcpTempBucket   string
-	DeleteTempFile  bool
-	gostorageClient gostorage.GoStorage
+	region            string
+	credentials       CredentialsHolder
+	tempBuckets       map[providers.Provider]string
+	DeleteTempFile    bool
+	gostorageClient   gostorage.GoStorage
 }
 
 func CreateGoT2SClient(credentials CredentialsHolder, region string) GoT2SClient {
 	return GoT2SClient{
 		providerInstances: make(map[providers.Provider]*T2SProvider),
 		tempBuckets:       make(map[providers.Provider]string),
-		//awsProvider:    ts2_aws.T2SAmazonWebServices{},
-		credentials:    credentials,
-		region:         region,
-		DeleteTempFile: true,
+		credentials:       credentials,
+		region:            region,
+		DeleteTempFile:    true,
 	}
 }
 
 func (a GoT2SClient) getProviderInstance(provider providers.Provider) T2SProvider {
 	if a.providerInstances[provider] == nil {
 		prov := CreateProviderInstance(provider)
+		prov = prov.CreateServiceClient(a.credentials, a.region)
 		a.providerInstances[provider] = &prov
 	}
 	return *a.providerInstances[provider]
@@ -76,29 +72,7 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 		options.Provider = providers.ProviderAWS
 	}
 
-	// Try to use existing client for chosen provider, or create new one if the chosen provider doesn't already have a client.
-	// TODO refactor
-	/*
-		var provider T2SProvider = ts2_aws.T2SAmazonWebServices{}
-		if options.Provider == providers.ProviderAWS {
-			//fmt.Printf("aws %p", &a.awsProvider)
-			if a.awsProvider == (ts2_aws.T2SAmazonWebServices{}) {
-				fmt.Printf("Provider is AWS and no AWS instance was created yet -> create new one")
-				a.awsProvider = CreateProviderInstance(providers.ProviderAWS)
-				a.awsProvider = a.awsProvider.CreateServiceClient(a.credentials, a.region)
-			}
-			provider = a.awsProvider
-		} else { // provider is GCP
-			if a.gcpProvider == (ts2_gcp.T2SGoogleCloudPlatform{}) {
-				fmt.Printf("Provider is GCP and no GCP instance was created yet -> create new one")
-				a.gcpProvider = CreateProviderInstance(providers.ProviderGCP)
-				a.gcpProvider = a.gcpProvider.CreateServiceClient(a.credentials, a.region)
-			}
-			provider = a.gcpProvider
-		}
-	*/
 	provider := a.getProviderInstance(options.Provider)
-	provider = provider.CreateServiceClient(a.credentials, a.region)
 
 	if options.VoiceConfig.VoiceIdConfig.IsEmpty() {
 		// if both VoiceParamsConfig is undefined -> use default object

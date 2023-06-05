@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/polly"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"goTest/GoText2Speech"
 	. "goTest/GoText2Speech/shared"
 	"io"
 	"strconv"
@@ -63,9 +62,9 @@ func (a T2SAmazonWebServices) IsURLonOwnStorage(url string) bool {
 	return IsAWSUrl(url)
 }
 
-func (a T2SAmazonWebServices) CreateTempDestination(goT2SClient GoText2Speech.GoT2SClient, fileName string) string {
+func (a T2SAmazonWebServices) CreateTempDestination(tempBucket string, fileName string) string {
 	now := time.Now()
-	return "https://" + goT2SClient.AwsTempBucket + ".s3.amazonaws.com/" + fileName + strconv.FormatInt(now.UnixNano(), 10)
+	return "https://" + tempBucket + ".s3.amazonaws.com/" + fileName + strconv.FormatInt(now.UnixNano(), 10)
 }
 
 // TransformOptions
@@ -96,19 +95,21 @@ func (a T2SAmazonWebServices) TransformOptions(text string, options TextToSpeech
 	return text, options, nil
 }
 
-// ChooseVoice chooses a voice for AWS Polly based on the given parameters (language, gender and optionally engine).
-func (a T2SAmazonWebServices) ChooseVoice(options TextToSpeechOptions) (TextToSpeechOptions, error) {
+// FindVoice finds a voice for AWS Polly based on the given parameters (language, gender and optionally engine).
+// If voice was found, returns VoiceIdConfig object on which VoiceId and Engine is set (and nil as error).
+// If a voice with the needed parameters is not found, returns nil and error.
+func (a T2SAmazonWebServices) FindVoice(options TextToSpeechOptions) (*VoiceIdConfig, error) {
 
 	// Get list of available voices for the chosen language and pick the first one with the correct gender and engine
 	input := &polly.DescribeVoicesInput{LanguageCode: aws.String(options.VoiceConfig.VoiceParamsConfig.LanguageCode)}
 	resp, err := a.t2sClient.DescribeVoices(input)
 
 	if err != nil {
-		return options, errors.New("Error while describing voices: " + err.Error())
+		return nil, errors.New("Error while describing voices: " + err.Error())
 	}
 
-	voiceFound := false
 	targetEngine := options.VoiceConfig.VoiceParamsConfig.Engine
+	var voiceConfig *VoiceIdConfig = nil
 	for _, v := range resp.Voices {
 		if strings.EqualFold(*v.Gender, options.VoiceConfig.VoiceParamsConfig.Gender.String()) {
 
@@ -126,11 +127,10 @@ func (a T2SAmazonWebServices) ChooseVoice(options TextToSpeechOptions) (TextToSp
 				}
 			}
 
-			options.VoiceConfig.VoiceIdConfig = VoiceIdConfig{
+			voiceConfig = &VoiceIdConfig{
 				VoiceId: *v.Name,
 				Engine:  targetEngine,
 			}
-			voiceFound = true
 			fmt.Printf("Found voice with language %s, gender %s and engine %s: %s\n",
 				options.VoiceConfig.VoiceParamsConfig.LanguageCode,
 				options.VoiceConfig.VoiceParamsConfig.Gender.String(),
@@ -139,14 +139,14 @@ func (a T2SAmazonWebServices) ChooseVoice(options TextToSpeechOptions) (TextToSp
 		}
 	}
 
-	if !voiceFound {
+	if voiceConfig != nil {
 		errText := fmt.Sprintf("error: No voice found for language %s and gender %s\n",
 			options.VoiceConfig.VoiceParamsConfig.LanguageCode,
 			options.VoiceConfig.VoiceParamsConfig.Gender.String())
-		return options, errors.New(errText)
+		return nil, errors.New(errText)
 	}
 
-	return options, nil
+	return voiceConfig, nil
 }
 
 func (a T2SAmazonWebServices) CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider {

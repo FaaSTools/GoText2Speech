@@ -7,3 +7,9 @@ const (
 	ProviderGCP         Provider = "GCP"
 	ProviderUnspecified Provider = ""
 )
+
+var allProviders = []Provider{ProviderAWS, ProviderGCP}
+
+func GetAllProviders() []Provider {
+	return allProviders
+}

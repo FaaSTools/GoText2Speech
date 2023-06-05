@@ -16,23 +16,39 @@ import (
 )
 
 type GoT2SClient struct {
-	awsProvider     T2SProvider
-	gcpProvider     T2SProvider
-	region          string
-	credentials     CredentialsHolder
-	AwsTempBucket   string
-	GcpTempBucket   string
+	providerInstances map[providers.Provider]*T2SProvider
+	//awsProvider     T2SProvider
+	//gcpProvider     T2SProvider
+	region      string
+	credentials CredentialsHolder
+	tempBuckets map[providers.Provider]string
+	//AwsTempBucket   string
+	//GcpTempBucket   string
 	DeleteTempFile  bool
 	gostorageClient gostorage.GoStorage
 }
 
 func CreateGoT2SClient(credentials CredentialsHolder, region string) GoT2SClient {
 	return GoT2SClient{
-		awsProvider:    ts2_aws.T2SAmazonWebServices{},
+		providerInstances: make(map[providers.Provider]*T2SProvider),
+		tempBuckets:       make(map[providers.Provider]string),
+		//awsProvider:    ts2_aws.T2SAmazonWebServices{},
 		credentials:    credentials,
 		region:         region,
 		DeleteTempFile: true,
 	}
+}
+
+func (a GoT2SClient) getProviderInstance(provider providers.Provider) T2SProvider {
+	if a.providerInstances[provider] == nil {
+		prov := CreateProviderInstance(provider)
+		a.providerInstances[provider] = &prov
+	}
+	return *a.providerInstances[provider]
+}
+
+func (a GoT2SClient) SetTempBucket(provider providers.Provider, tempBucket string) {
+	a.tempBuckets[provider] = tempBucket
 }
 
 // T2SDirect Transforms the given text into speech and stores the file in destination.
@@ -62,23 +78,27 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 
 	// Try to use existing client for chosen provider, or create new one if the chosen provider doesn't already have a client.
 	// TODO refactor
-	var provider T2SProvider = ts2_aws.T2SAmazonWebServices{}
-	if options.Provider == providers.ProviderAWS {
-		//fmt.Printf("aws %p", &a.awsProvider)
-		if a.awsProvider == (ts2_aws.T2SAmazonWebServices{}) {
-			fmt.Printf("Provider is AWS and no AWS instance was created yet -> create new one")
-			a.awsProvider = CreateProviderInstance(providers.ProviderAWS)
-			a.awsProvider = a.awsProvider.CreateServiceClient(a.credentials, a.region)
+	/*
+		var provider T2SProvider = ts2_aws.T2SAmazonWebServices{}
+		if options.Provider == providers.ProviderAWS {
+			//fmt.Printf("aws %p", &a.awsProvider)
+			if a.awsProvider == (ts2_aws.T2SAmazonWebServices{}) {
+				fmt.Printf("Provider is AWS and no AWS instance was created yet -> create new one")
+				a.awsProvider = CreateProviderInstance(providers.ProviderAWS)
+				a.awsProvider = a.awsProvider.CreateServiceClient(a.credentials, a.region)
+			}
+			provider = a.awsProvider
+		} else { // provider is GCP
+			if a.gcpProvider == (ts2_gcp.T2SGoogleCloudPlatform{}) {
+				fmt.Printf("Provider is GCP and no GCP instance was created yet -> create new one")
+				a.gcpProvider = CreateProviderInstance(providers.ProviderGCP)
+				a.gcpProvider = a.gcpProvider.CreateServiceClient(a.credentials, a.region)
+			}
+			provider = a.gcpProvider
 		}
-		provider = a.awsProvider
-	} else { // provider is GCP
-		if a.gcpProvider == (ts2_gcp.T2SGoogleCloudPlatform{}) {
-			fmt.Printf("Provider is GCP and no GCP instance was created yet -> create new one")
-			a.gcpProvider = CreateProviderInstance(providers.ProviderGCP)
-			a.gcpProvider = a.gcpProvider.CreateServiceClient(a.credentials, a.region)
-		}
-		provider = a.gcpProvider
-	}
+	*/
+	provider := a.getProviderInstance(options.Provider)
+	provider = provider.CreateServiceClient(a.credentials, a.region)
 
 	if options.VoiceConfig.VoiceIdConfig.IsEmpty() {
 		// if both VoiceParamsConfig is undefined -> use default object
@@ -94,11 +114,11 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 			}
 		}
 
-		newOptions, chooseVoiceErr := provider.ChooseVoice(options)
+		voiceIdConfig, chooseVoiceErr := provider.FindVoice(options)
 		if chooseVoiceErr != nil {
 			return a, chooseVoiceErr
 		}
-		options = newOptions
+		options.VoiceConfig.VoiceIdConfig = *voiceIdConfig
 	}
 
 	// adjust parameters for Google/AWS
@@ -117,7 +137,7 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 	if !provider.IsURLonOwnStorage(destination) {
 		splits := strings.Split(destination, "/")
 		fileName := splits[len(splits)-1]
-		providerDestination = provider.CreateTempDestination(a, fileName)
+		providerDestination = provider.CreateTempDestination(a.tempBuckets[options.Provider], fileName)
 	}
 
 	// adjust provider-specific settings and execute T2S on selected provider
@@ -227,5 +247,12 @@ func CreateProviderInstance(provider providers.Provider) T2SProvider {
 // Currently, this function returns true if the given URL is an S3 or Google Cloud Storage URL/URI.
 // This function should be extended when adding new providers.
 func IsProviderStorageUrl(url string) bool {
+
+	// TODO dynamically
+	/*
+		for _, provider := range providers.GetAllProviders() {
+		}
+	*/
+
 	return IsAWSUrl(url) || IsGoogleUrl(url)
 }

@@ -3,7 +3,6 @@ package gcp
 import (
 	"errors"
 	"fmt"
-	"goTest/GoText2Speech"
 	. "goTest/GoText2Speech/shared"
 )
 
@@ -71,16 +70,16 @@ func (a T2SGoogleCloudPlatform) IsURLonOwnStorage(url string) bool {
 	return IsGoogleUrl(url)
 }
 
-func (a T2SGoogleCloudPlatform) CreateTempDestination(goT2SClient GoText2Speech.GoT2SClient, fileName string) string {
+func (a T2SGoogleCloudPlatform) CreateTempDestination(tempBucket string, fileName string) string {
 	fmt.Println("Not yet implemented")
 	// TODO
 	return ""
 }
 
-func (a T2SGoogleCloudPlatform) ChooseVoice(options TextToSpeechOptions) (TextToSpeechOptions, error) {
+func (a T2SGoogleCloudPlatform) FindVoice(options TextToSpeechOptions) (*VoiceIdConfig, error) {
 	fmt.Println("Not yet implemented")
 	// TODO implement
-	return options, nil
+	return nil, nil
 }
 
 func (a T2SGoogleCloudPlatform) CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider {

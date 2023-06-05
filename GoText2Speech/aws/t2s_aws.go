@@ -276,6 +276,6 @@ func (a T2SAmazonWebServices) uploadFileToS3(fileContents io.Reader, bucket stri
 }
 
 func (a T2SAmazonWebServices) ExecuteT2S(source string, destination string, options TextToSpeechOptions) error {
-	// TODO
+	// TODO check if T2S on Google works via file. If not, remove ExecuteT2S from Provider interface
 	return nil
 }

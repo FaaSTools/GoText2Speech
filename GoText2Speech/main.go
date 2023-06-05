@@ -111,8 +111,10 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 
 	fmt.Println("Final Text: " + text)
 
+	// if destination of file is not on the storage service of the selected provider:
+	// create temporary location, execute T2S, and move file to actual destination.
 	providerDestination := destination
-	if provider.IsURLonOwnStorage(destination) {
+	if !provider.IsURLonOwnStorage(destination) {
 		splits := strings.Split(destination, "/")
 		fileName := splits[len(splits)-1]
 		providerDestination = provider.CreateTempDestination(a, fileName)
@@ -121,12 +123,20 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 	// adjust provider-specific settings and execute T2S on selected provider
 	t2sErr := provider.ExecuteT2SDirect(text, providerDestination, options)
 
+	// move file to actual destination, if needed
 	if !strings.EqualFold(providerDestination, destination) {
-		if a.DeleteTempFile {
-			storageObj := ParseUrlToGoStorageObject(providerDestination)
-			a.gostorageClient.DeleteFile(storageObj)
+
+		tempStorageObj := ParseUrlToGoStorageObject(providerDestination)
+		if IsProviderStorageUrl(destination) {
+			actualStorageObj := ParseUrlToGoStorageObject(destination)
+			a.gostorageClient.Copy(tempStorageObj, actualStorageObj)
+		} else { // local file
+			a.gostorageClient.DownloadFile(tempStorageObj, destination)
 		}
-		// TODO move file to selected provider (or download)
+
+		if a.DeleteTempFile {
+			a.gostorageClient.DeleteFile(tempStorageObj)
+		}
 	}
 
 	return a, t2sErr
@@ -145,7 +155,7 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 	localFilePath := ""
 	text := ""
 	fileOnCloudProvider := false
-	if IsAWSUrl(source) || IsGoogleUrl(source) { // file on cloud provider
+	if IsProviderStorageUrl(source) { // file on cloud provider
 		f, err := os.CreateTemp("", "sample")
 		if err != nil {
 			return a, errors.Join(errors.New(fmt.Sprintf("Couldn't download the source file '%s' because creation of temporary file failed.", source)), err)
@@ -210,4 +220,12 @@ func CreateProviderInstance(provider providers.Provider) T2SProvider {
 	default:
 		return nil
 	}
+}
+
+// IsProviderStorageUrl checks if the given string is a valid file URL for a storage service of one of the
+// supported storage providers.
+// Currently, this function returns true if the given URL is an S3 or Google Cloud Storage URL/URI.
+// This function should be extended when adding new providers.
+func IsProviderStorageUrl(url string) bool {
+	return IsAWSUrl(url) || IsGoogleUrl(url)
 }

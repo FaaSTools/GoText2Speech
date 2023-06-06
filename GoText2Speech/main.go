@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/FaaSTools/GoStorage/gostorage"
+	"sync"
+
 	//"github.com/dave-meyer/GoStorage/gostorage"
 	ts2_aws "goTest/GoText2Speech/aws"
 	ts2_gcp "goTest/GoText2Speech/gcp"
@@ -67,9 +69,14 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 		}
 	}
 
+	// TODO what is VoiceIdConfig is specified, but provider unspecified?
 	if options.Provider == providers.ProviderUnspecified {
 		// TODO choose provider based on heuristics
-		options.Provider = providers.ProviderAWS
+		var err error
+		options, err = a.determineProvider(options, destination)
+		if err != nil {
+			return a, err
+		}
 	}
 
 	provider := a.getProviderInstance(options.Provider)
@@ -214,6 +221,96 @@ func CreateProviderInstance(provider providers.Provider) T2SProvider {
 	default:
 		return nil
 	}
+}
+
+func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination string) (TextToSpeechOptions, error) {
+
+	// First heuristic: Choose provider that offers voice parameters (gender, language)
+	var wg sync.WaitGroup
+
+	voicePerProvider := make(map[providers.Provider]*VoiceIdConfig)
+	for _, provider := range providers.GetAllProviders() {
+		wg.Add(1)
+		go func(prov providers.Provider) {
+			defer wg.Done()
+			voiceId, err := a.getProviderInstance(prov).FindVoice(options)
+			// TODO mutex
+			if err != nil {
+				fmt.Printf("Error while trying to find voice for provider %s: %s", prov, err.Error())
+				voicePerProvider[prov] = nil
+			} else {
+				voicePerProvider[prov] = voiceId
+			}
+		}(provider)
+	}
+
+	wg.Wait()
+
+	for prov, voice := range voicePerProvider {
+		if voice == nil {
+			delete(voicePerProvider, prov)
+		}
+	}
+
+	if len(voicePerProvider) < 2 {
+		if len(voicePerProvider) < 1 {
+			return options, errors.New(fmt.Sprintf(
+				"Error while trying to find voice. No voice found with the given language '%s' and gender '%s' on any provider.",
+				options.VoiceConfig.VoiceParamsConfig.LanguageCode, options.VoiceConfig.VoiceParamsConfig.Gender)) // TODO engine?
+		}
+
+		// Only one provider offers this voice -> use this provider
+		for prov, voice := range voicePerProvider {
+			options.Provider = prov
+			options.VoiceConfig.VoiceIdConfig = *voice
+			return options, nil
+		}
+	}
+
+	// Multiple providers offer this voice -> next heuristic
+	// Second heuristic: Choose provider on which the destination file should be stored
+
+	for prov, voice := range voicePerProvider {
+		if a.getProviderInstance(prov).IsURLonOwnStorage(destination) {
+			options.Provider = prov
+			options.VoiceConfig.VoiceIdConfig = *voice
+			return options, nil
+		}
+	}
+
+	// Destination is not on any of the providers (i.e. destination is local file) -> next heuristic
+	// TODO (?) Third heuristic: Choose provider on which the source file is stored
+	/*
+		for prov, voice := range voicePerProvider {
+			if a.getProviderInstance(prov).IsURLonOwnStorage(destination) {
+				options.Provider = prov
+				options.VoiceConfig.VoiceIdConfig = *voice
+				return options, nil
+			}
+		}
+	*/
+
+	// Third/Fourth heuristic: Choose provider that offers the chosen output format
+	// TODO think of structure to make this easier to extend for other providers
+	if (voicePerProvider[providers.ProviderAWS] != nil) && ((options.OutputFormat == AudioFormatJson) || (options.OutputFormat == AudioFormatPcm)) {
+		options.Provider = providers.ProviderAWS
+		options.VoiceConfig.VoiceIdConfig = *voicePerProvider[providers.ProviderAWS]
+		return options, nil
+	}
+	if (voicePerProvider[providers.ProviderGCP] != nil) && ((options.OutputFormat == AudioFormatMulaw) || (options.OutputFormat == AudioFormatAlaw) || (options.OutputFormat == AudioFormatLinear16)) {
+		options.Provider = providers.ProviderGCP
+		options.VoiceConfig.VoiceIdConfig = *voicePerProvider[providers.ProviderGCP]
+		return options, nil
+	}
+
+	// Output format is supported on multiple providers -> use first provider in map (i.e. random provider)
+	for prov, voice := range voicePerProvider {
+		options.Provider = prov
+		options.VoiceConfig.VoiceIdConfig = *voice
+		return options, nil
+	}
+
+	return options, errors.New("error while choosing provider for text-to-speech: Undefined error. This error should not have happened")
 }
 
 // IsProviderStorageUrl checks if the given string is a valid file URL for a storage service of one of the

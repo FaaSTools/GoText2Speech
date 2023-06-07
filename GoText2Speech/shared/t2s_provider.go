@@ -6,7 +6,7 @@ type T2SProvider interface {
 	// FindVoice finds a voice that is available on the provider based on the given parameters (language, gender and optionally engine).
 	FindVoice(options TextToSpeechOptions) (*VoiceIdConfig, error)
 	// CreateServiceClient creates t2s client for the chosen provider and stores it in the struct.
-	CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider
+	CreateServiceClient(credentials CredentialsHolder, region string) (T2SProvider, error)
 	ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error
 	ExecuteT2S(source string, destination string, options TextToSpeechOptions) error
 	// IsURLonOwnStorage checks if the given URL references a file that is hosted on the provider's own storage service
@@ -16,4 +16,5 @@ type T2SProvider interface {
 	// on which a temporary file can be stored.
 	CreateTempDestination(tempBucket string, fileName string) string
 	GetSupportedAudioFormats() []AudioFormat
+	CloseServiceClient() error
 }

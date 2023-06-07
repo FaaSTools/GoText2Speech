@@ -35,6 +35,8 @@ func main() {
 	//t2sClient, err = t2sClient.T2S("https://davemeyer-test.s3.amazonaws.com/T2S_Test_file_01.txt", "D:\\testfile_04.mp3", *options)
 	// TODO GCP example
 
+	err = t2sClient.CloseAllProviderClients()
+
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)

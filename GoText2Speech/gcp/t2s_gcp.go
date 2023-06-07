@@ -1,14 +1,18 @@
 package gcp
 
 import (
+	texttospeech "cloud.google.com/go/texttospeech/apiv1"
+	"context"
 	"errors"
 	"fmt"
 	. "goTest/GoText2Speech/shared"
+	"strconv"
+	"time"
 )
 
 type T2SGoogleCloudPlatform struct {
 	credentials CredentialsHolder
-	t2sClient   any // TODO set correct type
+	t2sClient   texttospeech.Client // TODO use pointer value?
 }
 
 // AudioFormatToGCPValue Converts the given AudioFormat into a valid format that can be used on GCP.
@@ -65,7 +69,7 @@ func (a T2SGoogleCloudPlatform) GetSupportedAudioFormats() []AudioFormat {
 func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions, error) {
 	fmt.Println("Not yet (fully) implemented")
 
-	// TODO implement
+	// TODO implement (if needed)
 
 	if options.OutputFormatRaw == nil {
 		outputFormatRaw, audioFormatError := AudioFormatToGCPValue(options.OutputFormat)
@@ -83,9 +87,8 @@ func (a T2SGoogleCloudPlatform) IsURLonOwnStorage(url string) bool {
 }
 
 func (a T2SGoogleCloudPlatform) CreateTempDestination(tempBucket string, fileName string) string {
-	fmt.Println("Not yet implemented")
-	// TODO
-	return ""
+	now := time.Now()
+	return "https://storage.cloud.google.com/" + tempBucket + "/" + fileName + strconv.FormatInt(now.UnixNano(), 10)
 }
 
 func (a T2SGoogleCloudPlatform) FindVoice(options TextToSpeechOptions) (*VoiceIdConfig, error) {
@@ -94,10 +97,18 @@ func (a T2SGoogleCloudPlatform) FindVoice(options TextToSpeechOptions) (*VoiceId
 	return nil, nil
 }
 
-func (a T2SGoogleCloudPlatform) CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider {
+func (a T2SGoogleCloudPlatform) CreateServiceClient(credentials CredentialsHolder, region string) (T2SProvider, error) {
 	fmt.Println("Not yet implemented")
+
+	ctx := context.Background()
+	client, err := texttospeech.NewClient(ctx)
+	if err != nil {
+		return a, err
+	}
+	a.t2sClient = *client
+
 	// TODO implement
-	return a
+	return a, nil
 }
 
 func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
@@ -110,4 +121,8 @@ func (a T2SGoogleCloudPlatform) ExecuteT2S(source string, destination string, op
 	fmt.Println("Not yet implemented")
 	// TODO implement
 	return nil
+}
+
+func (a T2SGoogleCloudPlatform) CloseServiceClient() error {
+	return a.t2sClient.Close() // TODO check for nil first
 }

@@ -160,12 +160,12 @@ func (a T2SAmazonWebServices) FindVoice(options TextToSpeechOptions) (*VoiceIdCo
 	return voiceConfig, nil
 }
 
-func (a T2SAmazonWebServices) CreateServiceClient(credentials CredentialsHolder, region string) T2SProvider {
+func (a T2SAmazonWebServices) CreateServiceClient(credentials CredentialsHolder, region string) (T2SProvider, error) {
 	credentials.AwsCredentials.Config.Region = &region
 	sess := session.Must(session.NewSessionWithOptions(*credentials.AwsCredentials))
 	a.sess = sess
 	a.t2sClient = polly.New(sess)
-	return a
+	return a, nil
 }
 
 func AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFormatRaw string, destination string) (string, error) {
@@ -288,5 +288,10 @@ func (a T2SAmazonWebServices) uploadFileToS3(fileContents io.Reader, bucket stri
 
 func (a T2SAmazonWebServices) ExecuteT2S(source string, destination string, options TextToSpeechOptions) error {
 	// TODO check if T2S on Google works via file. If not, remove ExecuteT2S from Provider interface
+	return nil
+}
+
+func (a T2SAmazonWebServices) CloseServiceClient() error {
+	// Doesn't do anything, because AWS Polly Client cannot be closed
 	return nil
 }

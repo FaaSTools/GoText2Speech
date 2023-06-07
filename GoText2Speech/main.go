@@ -39,10 +39,33 @@ func CreateGoT2SClient(credentials CredentialsHolder, region string) GoT2SClient
 func (a GoT2SClient) getProviderInstance(provider providers.Provider) T2SProvider {
 	if a.providerInstances[provider] == nil {
 		prov := CreateProviderInstance(provider)
-		prov = prov.CreateServiceClient(a.credentials, a.region)
+		var err error = nil
+		prov, err = prov.CreateServiceClient(a.credentials, a.region)
+		if err != nil {
+			fmt.Printf("Error while creating service client: %s\n", err)
+		}
 		a.providerInstances[provider] = &prov
 	}
 	return *a.providerInstances[provider]
+}
+
+func (a GoT2SClient) CloseProviderClient(provider providers.Provider) error {
+	return a.getProviderInstance(provider).CloseServiceClient()
+}
+
+func (a GoT2SClient) CloseAllProviderClients() error {
+	var allErrors error = nil
+	for _, instance := range a.providerInstances {
+		err := (*instance).CloseServiceClient()
+		if err != nil {
+			if allErrors == nil {
+				allErrors = err
+			} else {
+				allErrors = errors.Join(allErrors, err)
+			}
+		}
+	}
+	return allErrors
 }
 
 func (a GoT2SClient) SetTempBucket(provider providers.Provider, tempBucket string) {

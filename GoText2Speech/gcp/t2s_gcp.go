@@ -50,6 +50,18 @@ func GCPValueToAudioFormat(rawFormat int) (AudioFormat, error) {
 	return "", errors.New(fmt.Sprintf("the specified rawFormat %d has no defined AudioFormat value.", rawFormat))
 }
 
+var gcpSupportedAudioFormats = []AudioFormat{
+	AudioFormatMp3,
+	AudioFormatOgg,
+	AudioFormatLinear16,
+	AudioFormatMulaw,
+	AudioFormatAlaw,
+}
+
+func (a T2SGoogleCloudPlatform) GetSupportedAudioFormats() []AudioFormat {
+	return gcpSupportedAudioFormats
+}
+
 func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions, error) {
 	fmt.Println("Not yet (fully) implemented")
 

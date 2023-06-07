@@ -291,19 +291,22 @@ func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination 
 	*/
 
 	// Third/Fourth heuristic: Choose provider that offers the chosen output format
-	// TODO think of structure to make this easier to extend for other providers
-	if (voicePerProvider[providers.ProviderAWS] != nil) && ((options.OutputFormat == AudioFormatJson) || (options.OutputFormat == AudioFormatPcm)) {
-		options.Provider = providers.ProviderAWS
-		options.VoiceConfig.VoiceIdConfig = *voicePerProvider[providers.ProviderAWS]
-		return options, nil
-	}
-	if (voicePerProvider[providers.ProviderGCP] != nil) && ((options.OutputFormat == AudioFormatMulaw) || (options.OutputFormat == AudioFormatAlaw) || (options.OutputFormat == AudioFormatLinear16)) {
-		options.Provider = providers.ProviderGCP
-		options.VoiceConfig.VoiceIdConfig = *voicePerProvider[providers.ProviderGCP]
-		return options, nil
+	if options.OutputFormat != AudioFormatUnspecified {
+		for prov, _ := range voicePerProvider {
+			audioFormats := a.getProviderInstance(prov).GetSupportedAudioFormats()
+			// make sure at least one provider is still available in the end
+			if !IncludesAudioFormat(audioFormats, options.OutputFormat) && (len(voicePerProvider) > 1) {
+				delete(voicePerProvider, prov)
+			}
+		}
 	}
 
-	// Output format is supported on multiple providers -> use first provider in map (i.e. random provider)
+	// The following code is executed in one of these cases:
+	// * Output format was unspecified
+	// * Multiple providers support the output format
+	// * Only one provider is left, which supports the output format
+	// * Only one provider is left, which doesn't support the output format
+	// Use first provider in map (i.e. random provider that is still left)
 	for prov, voice := range voicePerProvider {
 		options.Provider = prov
 		options.VoiceConfig.VoiceIdConfig = *voice

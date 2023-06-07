@@ -15,4 +15,5 @@ type T2SProvider interface {
 	// CreateTempDestination creates a URL for the provider's own storage service (i.e. S3 on AWS or Cloud Storage on GCP)
 	// on which a temporary file can be stored.
 	CreateTempDestination(tempBucket string, fileName string) string
+	GetSupportedAudioFormats() []AudioFormat
 }

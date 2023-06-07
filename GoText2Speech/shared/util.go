@@ -9,6 +9,16 @@ import (
 	"strings"
 )
 
+// IncludesAudioFormat returns true if the given AudioFormat array contains the given AudioFormat, false otherwise.
+func IncludesAudioFormat(formats []AudioFormat, format AudioFormat) bool {
+	for _, f := range formats {
+		if strings.EqualFold(string(f), string(format)) {
+			return true
+		}
+	}
+	return false
+}
+
 func IsAWSUrl(urlString string) bool {
 	return strings.HasPrefix(urlString, "s3://") || (strings.HasPrefix(urlString, "https://") && strings.Contains(urlString, "s3"))
 }

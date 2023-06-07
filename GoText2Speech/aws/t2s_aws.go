@@ -58,6 +58,17 @@ func AWSValueToAudioFormat(rawFormat string) (AudioFormat, error) {
 	return "", errors.New("the specified rawFormat " + rawFormat + " has no defined AudioFormat value.")
 }
 
+var awsSupportedAudioFormats = []AudioFormat{
+	AudioFormatMp3,
+	AudioFormatOgg,
+	AudioFormatPcm,
+	AudioFormatJson,
+}
+
+func (a T2SAmazonWebServices) GetSupportedAudioFormats() []AudioFormat {
+	return awsSupportedAudioFormats
+}
+
 func (a T2SAmazonWebServices) IsURLonOwnStorage(url string) bool {
 	return IsAWSUrl(url)
 }

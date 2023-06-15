@@ -1,25 +1,30 @@
 package gcp
 
 import (
+	"bytes"
+	"cloud.google.com/go/storage"
 	texttospeech "cloud.google.com/go/texttospeech/apiv1"
+	"cloud.google.com/go/texttospeech/apiv1/texttospeechpb"
 	"context"
 	"errors"
 	"fmt"
 	. "goTest/GoText2Speech/shared"
+	"io"
+	"math"
 	"strconv"
 	"time"
 )
 
 type T2SGoogleCloudPlatform struct {
 	credentials CredentialsHolder
-	t2sClient   texttospeech.Client // TODO use pointer value?
+	t2sClient   *texttospeech.Client
 }
 
 // AudioFormatToGCPValue Converts the given AudioFormat into a valid format that can be used on GCP.
 // If AudioFormat is unspecified, mp3 will be used.
 // If AudioFormat is not supported on GCP, an error is thrown.
 // Available audio formats on GCP can be seen here: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioEncoding
-func AudioFormatToGCPValue(format AudioFormat) (int, error) { // TODO use AudioEncoding type
+func AudioFormatToGCPValue(format AudioFormat) (texttospeechpb.AudioEncoding, error) {
 	switch format {
 	case AudioFormatUnspecified:
 		fallthrough
@@ -38,10 +43,25 @@ func AudioFormatToGCPValue(format AudioFormat) (int, error) { // TODO use AudioE
 	}
 }
 
+func VoiceGenderToGCPGender(gender VoiceGender) texttospeechpb.SsmlVoiceGender {
+	switch gender {
+	case VoiceGenderFemale:
+		return texttospeechpb.SsmlVoiceGender_FEMALE
+	case VoiceGenderMale:
+		return texttospeechpb.SsmlVoiceGender_MALE
+	case VoiceGenderNeutral:
+		return texttospeechpb.SsmlVoiceGender_NEUTRAL
+	case VoiceGenderUnspecified:
+		fallthrough
+	default:
+		return texttospeechpb.SsmlVoiceGender_SSML_VOICE_GENDER_UNSPECIFIED
+	}
+}
+
 // GCPValueToAudioFormat Reverse of AudioFormatToGCPValue function.
 // It gets a rawFormat value and returns the corresponding AudioFormat enum value.
 // If enum value couldn't be found or if the specified rawFormat is undefined/empty, an error is returned.
-func GCPValueToAudioFormat(rawFormat int) (AudioFormat, error) {
+func GCPValueToAudioFormat(rawFormat texttospeechpb.AudioEncoding) (AudioFormat, error) {
 	if rawFormat < 1 {
 		return "", errors.New("the specified rawFormat was undefined")
 	}
@@ -67,9 +87,8 @@ func (a T2SGoogleCloudPlatform) GetSupportedAudioFormats() []AudioFormat {
 }
 
 func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpeechOptions) (string, TextToSpeechOptions, error) {
-	fmt.Println("Not yet (fully) implemented")
-
-	// TODO implement (if needed)
+	// on GCP, the pitch value is in range [-20.0, 20.0]. GoTextToSpeech pitch value is in [-1.0, 1.0].
+	options.Pitch = math.Min(math.Max(options.Pitch, -1), 1) * 20.0
 
 	if options.OutputFormatRaw == nil {
 		outputFormatRaw, audioFormatError := AudioFormatToGCPValue(options.OutputFormat)
@@ -92,37 +111,138 @@ func (a T2SGoogleCloudPlatform) CreateTempDestination(tempBucket string, fileNam
 }
 
 func (a T2SGoogleCloudPlatform) FindVoice(options TextToSpeechOptions) (*VoiceIdConfig, error) {
-	fmt.Println("Not yet implemented")
-	// TODO implement
-	return nil, nil
+	req := &texttospeechpb.ListVoicesRequest{
+		LanguageCode: options.VoiceConfig.VoiceParamsConfig.LanguageCode,
+	}
+	resp, err := a.t2sClient.ListVoices(context.Background(), req)
+	if err != nil {
+		return nil, err // TODO wrap
+	}
+
+	gcpGender := VoiceGenderToGCPGender(options.VoiceConfig.VoiceParamsConfig.Gender)
+	var gcpVoice *texttospeechpb.Voice = nil
+	for _, voice := range resp.GetVoices() {
+		if voice.GetSsmlGender() == gcpGender { // TODO engine?
+			gcpVoice = voice
+		}
+	}
+
+	if gcpVoice == nil {
+		errText := fmt.Sprintf("error: No voice found for language %s and gender %s\n",
+			options.VoiceConfig.VoiceParamsConfig.LanguageCode,
+			options.VoiceConfig.VoiceParamsConfig.Gender.String())
+		return nil, errors.New(errText)
+	}
+
+	fmt.Printf("Voice found for language %s and gender %s: %s\n",
+		options.VoiceConfig.VoiceParamsConfig.LanguageCode,
+		options.VoiceConfig.VoiceParamsConfig.Gender.String(),
+		gcpVoice.GetName())
+
+	voiceConfig := &VoiceIdConfig{
+		VoiceId: gcpVoice.GetName(),
+	}
+	return voiceConfig, nil
 }
 
 func (a T2SGoogleCloudPlatform) CreateServiceClient(credentials CredentialsHolder, region string) (T2SProvider, error) {
-	fmt.Println("Not yet implemented")
-
 	ctx := context.Background()
 	client, err := texttospeech.NewClient(ctx)
 	if err != nil {
 		return a, err
 	}
-	a.t2sClient = *client
-
-	// TODO implement
+	a.t2sClient = client
 	return a, nil
+}
+
+func GetBucketAndKeyFromCLoudStorageDestination(destination string) (string, string, error) {
+	// TODO
+	return "", "", nil
 }
 
 func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
 	fmt.Println("Not yet implemented")
-	// TODO implement
+
+	var input *texttospeechpb.SynthesisInput = nil
+	if options.TextType == TextTypeSsml {
+		inputSource := &texttospeechpb.SynthesisInput_Ssml{
+			Ssml: text,
+		}
+		input = &texttospeechpb.SynthesisInput{
+			InputSource: inputSource,
+		}
+	} else {
+		inputSource := &texttospeechpb.SynthesisInput_Text{
+			Text: text,
+		}
+		input = &texttospeechpb.SynthesisInput{
+			InputSource: inputSource,
+		}
+	}
+
+	req := texttospeechpb.SynthesizeSpeechRequest{
+		Input: input,
+		Voice: nil,
+		AudioConfig: &texttospeechpb.AudioConfig{
+			AudioEncoding:    options.OutputFormatRaw.(texttospeechpb.AudioEncoding),
+			SpeakingRate:     options.SpeakingRate,
+			Pitch:            options.Pitch,
+			VolumeGainDb:     options.Volume,
+			SampleRateHertz:  options.SampleRate,
+			EffectsProfileId: options.AudioEffects,
+		},
+	}
+
+	result, err := a.t2sClient.SynthesizeSpeech(context.Background(), &req)
+	if err != nil {
+		return err
+	}
+
+	bucket, key, destinationFormatErr := GetBucketAndKeyFromCLoudStorageDestination(destination)
+	if destinationFormatErr != nil {
+		return destinationFormatErr
+	}
+
+	uploadErr := a.uploadFileToCS(bytes.NewReader(result.GetAudioContent()), bucket, key)
+	if uploadErr != nil {
+		return uploadErr // TODO wrap
+	}
+
 	return nil
 }
 
-func (a T2SGoogleCloudPlatform) ExecuteT2S(source string, destination string, options TextToSpeechOptions) error {
-	fmt.Println("Not yet implemented")
-	// TODO implement
+// uploadFileToCS takes a file stream and uploads it to Google Cloud Storage using the given CS bucket and key.
+// Inspired by Google Cloud Storage examples (https://cloud.google.com/storage/docs/uploading-objects#permissions-client-libraries).
+func (a T2SGoogleCloudPlatform) uploadFileToCS(fileContents io.Reader, bucket string, key string) error {
+
+	fmt.Printf("Uploading file...\n")
+
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return errors.Join(errors.New(fmt.Sprintf("Error while uploading file '%s' on bucket '%s' to Google Cloud Storage.", key, bucket)), err)
+	}
+
+	defer client.Close()
+
+	cloudObj := client.Bucket(bucket).Object(key)
+
+	wc := cloudObj.NewWriter(ctx)
+	if _, err = io.Copy(wc, fileContents); err != nil {
+		return fmt.Errorf("io.Copy: %w", err)
+	}
+	if err := wc.Close(); err != nil {
+		return fmt.Errorf("Writer.Close: %w", err)
+	}
+	fmt.Printf("file uploaded to, %s/%s\n", bucket, key)
 	return nil
+
 }
 
 func (a T2SGoogleCloudPlatform) CloseServiceClient() error {
-	return a.t2sClient.Close() // TODO check for nil first
+	if a.t2sClient == nil {
+		fmt.Println("Warning: Couldn't close GCP service client, because client doesn't exist.")
+		return nil
+	}
+	return a.t2sClient.Close()
 }

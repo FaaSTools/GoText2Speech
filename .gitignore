@@ -1,1 +1,4 @@
 .idea
+
+gcp-credentials.yaml
+aws-credentials.yaml

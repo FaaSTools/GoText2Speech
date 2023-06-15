@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/FaaSTools/GoStorage/gostorage"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"sync"
-
 	//"github.com/dave-meyer/GoStorage/gostorage"
 	ts2_aws "goTest/GoText2Speech/aws"
 	ts2_gcp "goTest/GoText2Speech/gcp"
@@ -20,13 +20,24 @@ import (
 type GoT2SClient struct {
 	providerInstances map[providers.Provider]*T2SProvider
 	region            string
-	credentials       CredentialsHolder
+	credentials       *CredentialsHolder
 	tempBuckets       map[providers.Provider]string
 	DeleteTempFile    bool
-	gostorageClient   gostorage.GoStorage
+	gostorageClient   *gostorage.GoStorage
 }
 
-func CreateGoT2SClient(credentials CredentialsHolder, region string) GoT2SClient {
+func CreateGoT2SClient(credentials *CredentialsHolder, region string) GoT2SClient {
+	if credentials == nil {
+		awsCred, gcpCred := gostorage.LoadCredentialsFromDefaultLocation()
+		awsCred = &aws.Credentials{
+			AccessKeyID:     awsCred.AccessKeyID,
+			SecretAccessKey: awsCred.SecretAccessKey,
+		}
+		credentials = &gostorage.CredentialsHolder{
+			AwsCredentials:    awsCred,
+			GoogleCredentials: gcpCred,
+		}
+	}
 	return GoT2SClient{
 		providerInstances: make(map[providers.Provider]*T2SProvider),
 		tempBuckets:       make(map[providers.Provider]string),
@@ -40,7 +51,7 @@ func (a GoT2SClient) getProviderInstance(provider providers.Provider) T2SProvide
 	if a.providerInstances[provider] == nil {
 		prov := CreateProviderInstance(provider)
 		var err error = nil
-		prov, err = prov.CreateServiceClient(a.credentials, a.region)
+		prov, err = prov.CreateServiceClient(*a.credentials, a.region)
 		if err != nil {
 			fmt.Printf("Error while creating service client: %s\n", err)
 		}
@@ -92,9 +103,14 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 		}
 	}
 
-	// TODO what is VoiceIdConfig is specified, but provider unspecified?
 	if options.Provider == providers.ProviderUnspecified {
-		// TODO choose provider based on heuristics
+		if !options.VoiceConfig.VoiceIdConfig.IsEmpty() {
+			fmt.Printf("Cloud provider was unspecified, but voiceId was specified. In most cases, the voiceId is " +
+				"only available on a single provider. This means that the provider that will be chosen automatically " +
+				"might not support the specified voiceId. For best results, either specify the cloud provider " +
+				"alongslide the voiceId, or remove voiceId and specify voice parameters (gender & language).\n")
+		}
+
 		var err error
 		options, err = a.determineProvider(options, destination)
 		if err != nil {
@@ -125,7 +141,7 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 		options.VoiceConfig.VoiceIdConfig = *voiceIdConfig
 	}
 
-	// adjust parameters for Google/AWS
+	// adjust parameters for the chosen provider
 	var transformOptionsError error
 	text, options, transformOptionsError = provider.TransformOptions(text, options)
 
@@ -151,7 +167,7 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 	if !strings.EqualFold(providerDestination, destination) {
 
 		tempStorageObj := ParseUrlToGoStorageObject(providerDestination)
-		if IsProviderStorageUrl(destination) {
+		if a.IsProviderStorageUrl(destination) {
 			actualStorageObj := ParseUrlToGoStorageObject(destination)
 			a.gostorageClient.Copy(tempStorageObj, actualStorageObj)
 		} else { // local file
@@ -179,7 +195,7 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 	localFilePath := ""
 	text := ""
 	fileOnCloudProvider := false
-	if IsProviderStorageUrl(source) { // file on cloud provider
+	if a.IsProviderStorageUrl(source) { // file on cloud provider
 		f, err := os.CreateTemp("", "sample")
 		if err != nil {
 			return a, errors.Join(errors.New(fmt.Sprintf("Couldn't download the source file '%s' because creation of temporary file failed.", source)), err)
@@ -230,8 +246,11 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 }
 
 func (a GoT2SClient) initializeGoStorage() GoT2SClient {
-	// TODO check if exists
-	a.gostorageClient = gostorage.GoStorage{} // TODO
+	if a.gostorageClient == nil {
+		a.gostorageClient = &gostorage.GoStorage{
+			Credentials: *a.credentials,
+		}
+	}
 	return a
 }
 
@@ -250,14 +269,22 @@ func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination 
 
 	// First heuristic: Choose provider that offers voice parameters (gender, language)
 	var wg sync.WaitGroup
+	var mut sync.Mutex
 
 	voicePerProvider := make(map[providers.Provider]*VoiceIdConfig)
 	for _, provider := range providers.GetAllProviders() {
+
+		if !options.VoiceConfig.VoiceIdConfig.IsEmpty() {
+			voicePerProvider[provider] = &options.VoiceConfig.VoiceIdConfig
+			continue
+		}
+
 		wg.Add(1)
 		go func(prov providers.Provider) {
 			defer wg.Done()
+			defer mut.Unlock()
 			voiceId, err := a.getProviderInstance(prov).FindVoice(options)
-			// TODO mutex
+			mut.Lock()
 			if err != nil {
 				fmt.Printf("Error while trying to find voice for provider %s: %s", prov, err.Error())
 				voicePerProvider[prov] = nil
@@ -341,15 +368,11 @@ func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination 
 
 // IsProviderStorageUrl checks if the given string is a valid file URL for a storage service of one of the
 // supported storage providers.
-// Currently, this function returns true if the given URL is an S3 or Google Cloud Storage URL/URI.
-// This function should be extended when adding new providers.
-func IsProviderStorageUrl(url string) bool {
-
-	// TODO dynamically
-	/*
-		for _, provider := range providers.GetAllProviders() {
+func (a GoT2SClient) IsProviderStorageUrl(url string) bool {
+	for _, provider := range providers.GetAllProviders() {
+		if a.getProviderInstance(provider).IsURLonOwnStorage(url) {
+			return true
 		}
-	*/
-
-	return IsAWSUrl(url) || IsGoogleUrl(url)
+	}
+	return false
 }

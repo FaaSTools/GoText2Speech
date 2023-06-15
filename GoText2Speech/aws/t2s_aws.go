@@ -1,13 +1,15 @@
 package aws
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/polly"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/service/polly/types"
+	//"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/polly"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	. "goTest/GoText2Speech/shared"
 	"io"
 	"strconv"
@@ -17,8 +19,9 @@ import (
 
 type T2SAmazonWebServices struct {
 	credentials CredentialsHolder
-	t2sClient   *polly.Polly
-	sess        client.ConfigProvider
+	t2sClient   *polly.Client
+	region      string
+	//sess        client.ConfigProvider
 }
 
 // AudioFormatToAWSValue Converts the given AudioFormat into a valid format that can be used on AWS.
@@ -112,8 +115,8 @@ func (a T2SAmazonWebServices) TransformOptions(text string, options TextToSpeech
 func (a T2SAmazonWebServices) FindVoice(options TextToSpeechOptions) (*VoiceIdConfig, error) {
 
 	// Get list of available voices for the chosen language and pick the first one with the correct gender and engine
-	input := &polly.DescribeVoicesInput{LanguageCode: aws.String(options.VoiceConfig.VoiceParamsConfig.LanguageCode)}
-	resp, err := a.t2sClient.DescribeVoices(input)
+	input := &polly.DescribeVoicesInput{LanguageCode: types.LanguageCode(options.VoiceConfig.VoiceParamsConfig.LanguageCode)}
+	resp, err := a.t2sClient.DescribeVoices(context.Background(), input)
 
 	if err != nil {
 		return nil, errors.New("Error while describing voices: " + err.Error())
@@ -122,13 +125,13 @@ func (a T2SAmazonWebServices) FindVoice(options TextToSpeechOptions) (*VoiceIdCo
 	targetEngine := options.VoiceConfig.VoiceParamsConfig.Engine
 	var voiceConfig *VoiceIdConfig = nil
 	for _, v := range resp.Voices {
-		if strings.EqualFold(*v.Gender, options.VoiceConfig.VoiceParamsConfig.Gender.String()) {
+		if strings.EqualFold(string(v.Gender), options.VoiceConfig.VoiceParamsConfig.Gender.String()) {
 
 			// if engine param is specified, check if engine is supported for this voice
 			if !strings.EqualFold("", targetEngine) {
 				voiceWithEngineFound := false
 				for _, e := range v.SupportedEngines {
-					if strings.EqualFold(*e, targetEngine) {
+					if strings.EqualFold(string(e), targetEngine) {
 						voiceWithEngineFound = true
 						break
 					}
@@ -160,11 +163,24 @@ func (a T2SAmazonWebServices) FindVoice(options TextToSpeechOptions) (*VoiceIdCo
 	return voiceConfig, nil
 }
 
-func (a T2SAmazonWebServices) CreateServiceClient(credentials CredentialsHolder, region string) (T2SProvider, error) {
-	credentials.AwsCredentials.Config.Region = &region
-	sess := session.Must(session.NewSessionWithOptions(*credentials.AwsCredentials))
-	a.sess = sess
-	a.t2sClient = polly.New(sess)
+type CredentialsProvider struct {
+	credentials aws.Credentials
+}
+
+func (b CredentialsProvider) Retrieve(ctx context.Context) (aws.Credentials, error) {
+	return b.credentials, nil
+}
+
+func (a T2SAmazonWebServices) CreateServiceClient(cred CredentialsHolder, region string) (T2SProvider, error) {
+	credProv := CredentialsProvider{
+		credentials: *cred.AwsCredentials,
+	}
+	a.credentials = cred
+	a.region = region
+	a.t2sClient = polly.New(polly.Options{
+		Credentials: credProv,
+		Region:      region,
+	})
 	return a, nil
 }
 
@@ -198,27 +214,29 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 	}
 
 	speechInput := &polly.SynthesizeSpeechInput{
-		OutputFormat: aws.String(outputFormatRaw),
+		OutputFormat: types.OutputFormat(outputFormatRaw),
 		Text:         aws.String(text),
-		VoiceId:      aws.String(options.VoiceConfig.VoiceIdConfig.VoiceId),
-		TextType:     aws.String(options.TextType.String()),
+		VoiceId:      types.VoiceId(options.VoiceConfig.VoiceIdConfig.VoiceId),
+		TextType:     types.TextType(options.TextType.String()),
 	}
 	if !strings.EqualFold("", options.VoiceConfig.VoiceIdConfig.Engine) {
-		speechInput.SetEngine(options.VoiceConfig.VoiceIdConfig.Engine)
+		speechInput.Engine = types.Engine(options.VoiceConfig.VoiceIdConfig.Engine)
+		//speechInput.SetEngine(options.VoiceConfig.VoiceIdConfig.Engine)
 	}
 	if options.SampleRate != 0 {
-		speechInput.SetSampleRate(fmt.Sprintf("%d", options.SampleRate))
+		s := fmt.Sprintf("%d", options.SampleRate)
+		speechInput.SampleRate = &s
 	}
 
-	//fmt.Printf("%p\n", a.t2sClient)
-	//fmt.Printf("%t\n", a.t2sClient == nil)
-	output, err := a.t2sClient.SynthesizeSpeech(speechInput)
+	fmt.Printf("Synthesizing...\n")
+	output, err := a.t2sClient.SynthesizeSpeech(context.Background(), speechInput)
 
 	if err != nil {
 		errNew := errors.New("Error while synthesizing speech on AWS: " + err.Error() + "\n")
 		fmt.Printf(errNew.Error())
 		return errNew
 	}
+	fmt.Printf("Synthesizing done!\n")
 
 	destination, err = AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, destination)
 	if err != nil {
@@ -270,24 +288,35 @@ func GetBucketAndKeyFromAWSDestination(destination string) (string, string, erro
 // UploadFileToS3 takes a file stream and uploads it to S3 using the given S3 bucket and key.
 // Code adapted from AWS Docs (https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#hdr-Upload_Managers)
 func (a T2SAmazonWebServices) uploadFileToS3(fileContents io.Reader, bucket string, key string) error {
+
+	fmt.Printf("Uploading file...\n")
+
 	// Create an uploader with the session and default options
-	uploader := s3manager.NewUploader(a.sess)
+	uploader := s3.New(s3.Options{
+		Credentials: CredentialsProvider{
+			credentials: *a.credentials.AwsCredentials,
+		},
+		Region: a.region,
+	})
+
+	buf := new(bytes.Buffer)
+	_, err1 := buf.ReadFrom(fileContents)
+	if err1 != nil {
+		fmt.Println(err1.Error())
+	}
 
 	// Upload the file to S3.
-	result, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-		Body:   fileContents,
+	_, err := uploader.PutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:        aws.String(bucket),
+		Key:           aws.String(key),
+		Body:          buf,
+		ContentLength: int64(buf.Len()),
 	})
+
 	if err != nil {
 		return fmt.Errorf("failed to upload file, %v", err)
 	}
-	fmt.Printf("file uploaded to, %s\n", result.Location)
-	return nil
-}
-
-func (a T2SAmazonWebServices) ExecuteT2S(source string, destination string, options TextToSpeechOptions) error {
-	// TODO check if T2S on Google works via file. If not, remove ExecuteT2S from Provider interface
+	fmt.Printf("file uploaded to, %s/%s\n", bucket, key)
 	return nil
 }
 

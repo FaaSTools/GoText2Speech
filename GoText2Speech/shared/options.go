@@ -17,9 +17,9 @@ const (
 	// VoiceGenderFemale adult female voice. Available on AWS and GCP.
 	VoiceGenderFemale
 	// VoiceGenderMaleChild child male voice. Available only on GCP.
-	VoiceGenderMaleChild
+	//VoiceGenderMaleChild
 	// VoiceGenderFemaleChild child female voice. Available only on GCP.
-	VoiceGenderFemaleChild
+	//VoiceGenderFemaleChild
 	// VoiceGenderNeutral gender-neutral voice. Defined only by GCP, but not yet supported.
 	VoiceGenderNeutral
 )
@@ -34,10 +34,10 @@ func (voiceGender VoiceGender) String() string {
 		return "Unspecified"
 	case VoiceGenderNeutral:
 		return "Neutral"
-	case VoiceGenderMaleChild:
-		return "Male_Child"
-	case VoiceGenderFemaleChild:
-		return "Female_Child"
+	//case VoiceGenderMaleChild:
+	//	return "Male_Child"
+	//case VoiceGenderFemaleChild:
+	//	return "Female_Child"
 	default:
 		return ""
 	}
@@ -172,9 +172,10 @@ type TextToSpeechOptions struct {
 	// TODO transform values for GCP
 	// SpeakingRate 1.0 is normal speed, 0.5 is half speed, 2.0 is double speed
 	SpeakingRate float64
-	// Pitch 0.0 is normal pitch, 0.05 is a little higher pitch, -0.05 a little lower pitch
+	// Pitch 0.0 is normal pitch, 0.05 is a little higher pitch, -0.05 a little lower pitch. Recommended range: [-1.0, 1.0]
 	Pitch float64
-	// Volume increase in dB. 0.0 is normal, 6.0 is approximately double the normal volume, -6.0 is half the normal volume
+	// Volume increase in dB. 0.0 is normal, 6.0 is approximately double the normal volume, -6.0 is half the normal volume.
+	// Recommended range: [-96.0, 16.0]
 	Volume float64
 	// AudioEffects only available on Google Cloud Platform.
 	// See documentation for more information: https://cloud.google.com/text-to-speech/docs/audio-profiles
@@ -184,7 +185,7 @@ type TextToSpeechOptions struct {
 	// AWS Doc: https://docs.aws.amazon.com/polly/latest/dg/API_SynthesisTask.html
 	// GCP Doc: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioConfig
 	// If SampleRate is 0, the default value for the provider is selected
-	SampleRate int
+	SampleRate int32
 	// OutputFormat Each provider allows different output formats.
 	// AWS Doc: https://docs.aws.amazon.com/polly/latest/dg/API_SynthesizeSpeech.html#polly-SynthesizeSpeech-request-OutputFormat
 	// GCP Doc: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioEncoding
@@ -202,7 +203,7 @@ type TextToSpeechOptions struct {
 
 func GetDefaultTextToSpeechOptions() *TextToSpeechOptions {
 	return &TextToSpeechOptions{
-		Provider: providers.ProviderAWS,
+		Provider: providers.ProviderUnspecified,
 		TextType: TextTypeAuto,
 		VoiceConfig: VoiceConfig{
 			VoiceParamsConfig: GetDefaultVoiceParamsConfig(),

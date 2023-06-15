@@ -3,8 +3,11 @@ module goTest
 go 1.19
 
 require (
+	cloud.google.com/go/texttospeech v1.7.0
 	github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
 	github.com/aws/aws-sdk-go v1.44.199
+	github.com/aws/aws-sdk-go-v2 v1.18.0
+	github.com/aws/aws-sdk-go-v2/service/polly v1.26.0
 //github.com/dave-meyer/GoStorage v0.0.0-20230601102518-06972751a46f
 )
 
@@ -12,16 +15,15 @@ require (
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/iam v0.13.0 // indirect
 	cloud.google.com/go/longrunning v0.4.2 // indirect
-	cloud.google.com/go/storage v1.28.1 // indirect
-	cloud.google.com/go/texttospeech v1.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.18.0 // indirect
+	cloud.google.com/go/storage v1.30.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.4.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.15.3 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.11.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.33 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.27 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.10 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.1 // indirect
@@ -37,6 +39,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.10.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

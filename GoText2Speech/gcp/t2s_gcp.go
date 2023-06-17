@@ -12,6 +12,7 @@ import (
 	"io"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -155,14 +156,29 @@ func (a T2SGoogleCloudPlatform) CreateServiceClient(credentials CredentialsHolde
 	return a, nil
 }
 
+func (a T2SGoogleCloudPlatform) AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFormatRaw any, destination string) (string, error) {
+	if options.AddFileExtension {
+		audioFormat, err := GCPValueToAudioFormat(texttospeechpb.AudioEncoding(outputFormatRaw.(int)))
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			errNew := errors.New(fmt.Sprintf("No file extension found for the specified raw audio format %d. No file extension is added to file name.\n", outputFormatRaw.(int)))
+			return destination, errors.Join(err, errNew)
+		} else {
+			audioFormatStr := AudioFormatToFileExtension(audioFormat)
+			if !strings.HasSuffix(destination, audioFormatStr) {
+				destination += audioFormatStr
+			}
+		}
+	}
+	return destination, nil
+}
+
 func GetBucketAndKeyFromCLoudStorageDestination(destination string) (string, string, error) {
 	// TODO
 	return "", "", nil
 }
 
-func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
-	fmt.Println("Not yet implemented")
-
+func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) (io.Reader, error) {
 	var input *texttospeechpb.SynthesisInput = nil
 	if options.TextType == TextTypeSsml {
 		inputSource := &texttospeechpb.SynthesisInput_Ssml{
@@ -195,20 +211,33 @@ func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string
 
 	result, err := a.t2sClient.SynthesizeSpeech(context.Background(), &req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	stream := bytes.NewReader(result.GetAudioContent())
+	return stream, nil
+
+	/*
+		bucket, key, destinationFormatErr := GetBucketAndKeyFromCLoudStorageDestination(destination)
+		if destinationFormatErr != nil {
+			return destinationFormatErr
+		}
+
+		uploadErr := a.uploadFileToCS(bytes.NewReader(result.GetAudioContent()), bucket, key)
+		if uploadErr != nil {
+			return uploadErr // TODO wrap
+		}
+
+		return nil
+	*/
+}
+
+func (a T2SGoogleCloudPlatform) UploadFile(fileContents io.Reader, destination string) error {
 	bucket, key, destinationFormatErr := GetBucketAndKeyFromCLoudStorageDestination(destination)
 	if destinationFormatErr != nil {
 		return destinationFormatErr
 	}
-
-	uploadErr := a.uploadFileToCS(bytes.NewReader(result.GetAudioContent()), bucket, key)
-	if uploadErr != nil {
-		return uploadErr // TODO wrap
-	}
-
-	return nil
+	return a.uploadFileToCS(fileContents, bucket, key)
 }
 
 // uploadFileToCS takes a file stream and uploads it to Google Cloud Storage using the given CS bucket and key.

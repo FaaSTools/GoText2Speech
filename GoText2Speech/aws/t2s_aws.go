@@ -184,12 +184,12 @@ func (a T2SAmazonWebServices) CreateServiceClient(cred CredentialsHolder, region
 	return a, nil
 }
 
-func AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFormatRaw string, destination string) (string, error) {
+func (a T2SAmazonWebServices) AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFormatRaw any, destination string) (string, error) {
 	if options.AddFileExtension {
-		audioFormat, err := AWSValueToAudioFormat(outputFormatRaw)
+		audioFormat, err := AWSValueToAudioFormat(outputFormatRaw.(string))
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
-			errNew := errors.New(fmt.Sprintf("No file extension found for the specified raw audio format %s. No file extension is added to file name.\n", outputFormatRaw))
+			errNew := errors.New(fmt.Sprintf("No file extension found for the specified raw audio format %s. No file extension is added to file name.\n", outputFormatRaw.(string)))
 			return destination, errors.Join(err, errNew)
 		} else {
 			audioFormatStr := AudioFormatToFileExtension(audioFormat)
@@ -204,13 +204,13 @@ func AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFo
 // ExecuteT2SDirect executes Text-to-Speech using AWS Polly service. The given text is transformed into speech
 // using the given options. The created audio file is uploaded to AWS S3 on the given destination.
 // The destination string can either be an AWS S3 URI (starting with "s3://") or AWS S3 Object URL (starting with "https://").
-func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) error {
+func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) (io.Reader, error) {
 
 	outputFormatRaw, outputFormatAssertedCorrectly := options.OutputFormatRaw.(string)
 
 	if !outputFormatAssertedCorrectly {
 		outputFormatError := errors.New("the raw output format was not a string, but AWS can only use strings as output format")
-		return outputFormatError
+		return nil, outputFormatError
 	}
 
 	speechInput := &polly.SynthesizeSpeechInput{
@@ -234,35 +234,38 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 	if err != nil {
 		errNew := errors.New("Error while synthesizing speech on AWS: " + err.Error() + "\n")
 		fmt.Printf(errNew.Error())
-		return errNew
+		return nil, errNew
 	}
 	fmt.Printf("Synthesizing done!\n")
+	return output.AudioStream, nil
 
-	destination, err = AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, destination)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		// not a fatal error -> just resume code
-	}
+	/*
+		destination, err = AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, destination)
+		if err != nil {
+			fmt.Printf("%s\n", err.Error())
+			// not a fatal error -> just resume code
+		}
 
-	bucket, key, destinationFormatErr := GetBucketAndKeyFromAWSDestination(destination)
-	if destinationFormatErr != nil {
-		return destinationFormatErr
-	}
+		bucket, key, destinationFormatErr := GetBucketAndKeyFromAWSDestination(destination)
+		if destinationFormatErr != nil {
+			return destinationFormatErr
+		}
 
-	err = a.uploadFileToS3(output.AudioStream, bucket, key)
-	errClose := output.AudioStream.Close()
-	if err != nil {
-		errNew := errors.New("Error while uploading file on AWS S3: " + err.Error())
-		fmt.Printf(errNew.Error())
-		return errNew
-	}
-	if errClose != nil {
-		errNew := errors.New("Error while closing speech synthesis audio stream: " + errClose.Error())
-		fmt.Printf(errNew.Error())
-		return errNew
-	}
+		err = a.uploadFileToS3(output.AudioStream, bucket, key)
+		errClose := output.AudioStream.Close()
+		if err != nil {
+			errNew := errors.New("Error while uploading file on AWS S3: " + err.Error())
+			fmt.Printf(errNew.Error())
+			return errNew
+		}
+		if errClose != nil {
+			errNew := errors.New("Error while closing speech synthesis audio stream: " + errClose.Error())
+			fmt.Printf(errNew.Error())
+			return errNew
+		}
 
-	return nil
+		return nil
+	*/
 }
 
 // GetBucketAndKeyFromAWSDestination receives either an AWS S3 URI (starting with "s3://") or
@@ -283,6 +286,14 @@ func GetBucketAndKeyFromAWSDestination(destination string) (string, string, erro
 	} else {
 		return "", "", errors.New(fmt.Sprintf("The given destination '%s' is not a valid S3 URI or S3 Object URL.", destination))
 	}
+}
+
+func (a T2SAmazonWebServices) UploadFile(fileContents io.Reader, destination string) error {
+	bucket, key, destinationFormatErr := GetBucketAndKeyFromAWSDestination(destination)
+	if destinationFormatErr != nil {
+		return destinationFormatErr
+	}
+	return a.uploadFileToS3(fileContents, bucket, key)
 }
 
 // UploadFileToS3 takes a file stream and uploads it to S3 using the given S3 bucket and key.

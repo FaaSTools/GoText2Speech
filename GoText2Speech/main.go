@@ -153,33 +153,115 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 
 	// if destination of file is not on the storage service of the selected provider:
 	// create temporary location, execute T2S, and move file to actual destination.
-	providerDestination := destination
-	if !provider.IsURLonOwnStorage(destination) {
-		splits := strings.Split(destination, "/")
-		fileName := splits[len(splits)-1]
-		providerDestination = provider.CreateTempDestination(a.tempBuckets[options.Provider], fileName)
-	}
+	/*
+		providerDestination := destination
+		if !provider.IsURLonOwnStorage(destination) {
+			splits := strings.Split(destination, "/")
+			fileName := splits[len(splits)-1]
+			providerDestination = provider.CreateTempDestination(a.tempBuckets[options.Provider], fileName)
+		}
+	*/
 
 	// adjust provider-specific settings and execute T2S on selected provider
-	t2sErr := provider.ExecuteT2SDirect(text, providerDestination, options)
+	audioData, t2sErr := provider.ExecuteT2SDirect(text, destination, options)
 
-	// move file to actual destination, if needed
-	if !strings.EqualFold(providerDestination, destination) {
+	var fileExtErr error = nil
+	destination, fileExtErr = provider.AddFileExtensionToDestinationIfNeeded(options, options.OutputFormatRaw, destination)
+	if fileExtErr != nil { // not a fatal error
+		fmt.Printf(fileExtErr.Error())
+	}
 
-		tempStorageObj := ParseUrlToGoStorageObject(providerDestination)
-		if a.IsProviderStorageUrl(destination) {
-			actualStorageObj := ParseUrlToGoStorageObject(destination)
-			a.gostorageClient.Copy(tempStorageObj, actualStorageObj)
-		} else { // local file
-			a.gostorageClient.DownloadFile(tempStorageObj, destination)
+	if provider.IsURLonOwnStorage(destination) { // own storage -> upload directly
+		err := provider.UploadFile(audioData, destination)
+		if err != nil {
+			return a, errors.Join(errors.New(fmt.Sprintf("error while uploading audio file to %s", destination)), err)
+		}
+	} else if a.IsProviderStorageUrl(destination) { // other cloud storage -> upload via GoStorage
+		tmpFile, err := os.CreateTemp("", "sample")
+		if err != nil {
+			return a, errors.Join(errors.New("error while creating file for temporarily storing audio file before upload"), err)
+		}
+
+		err = storeAudioToLocalFile(audioData, tmpFile)
+		if err != nil {
+			if a.IsProviderStorageUrl(destination) {
+				return a, errors.Join(errors.New("error while writing audio to temporary file"), err)
+			}
+			return a, errors.Join(errors.New("error while writing audio to local file"), err)
+		}
+
+		target := ParseUrlToGoStorageObject(destination)
+		a.gostorageClient.UploadFile(gostorage.GoStorageObject{
+			Bucket:        target.Bucket,
+			Key:           target.Key,
+			Region:        target.Region,
+			IsLocal:       true,
+			LocalFilePath: tmpFile.Name(),
+			ProviderType:  target.ProviderType,
+		})
+
+		closeErr := tmpFile.Close()
+		if closeErr != nil {
+			return a, errors.Join(errors.New("error while closing tmp file"), closeErr)
 		}
 
 		if a.DeleteTempFile {
-			a.gostorageClient.DeleteFile(tempStorageObj)
+			removeErr := os.Remove(tmpFile.Name())
+			if removeErr != nil {
+				return a, errors.Join(errors.New("error while removing temporarily stored audio file"), removeErr)
+			}
+		}
+	} else { // local file -> store locally
+		file, err := os.Open(destination)
+		if err != nil {
+			return a, errors.Join(errors.New(fmt.Sprintf("error while opening file at destination %s", destination)), err)
+		}
+
+		err = storeAudioToLocalFile(audioData, file)
+		if err != nil {
+			return a, errors.Join(errors.New("error while writing audio to local file"), err)
+		}
+		closeErr := file.Close()
+		if closeErr != nil {
+			return a, errors.Join(errors.New("error while closing local file"), closeErr)
 		}
 	}
 
+	// move file to actual destination, if needed
+	/*
+		if !strings.EqualFold(providerDestination, destination) {
+
+			tempStorageObj := ParseUrlToGoStorageObject(providerDestination)
+			if a.IsProviderStorageUrl(destination) {
+				actualStorageObj := ParseUrlToGoStorageObject(destination)
+				a.gostorageClient.Copy(tempStorageObj, actualStorageObj)
+			} else { // local file
+				a.gostorageClient.DownloadFile(tempStorageObj, destination)
+			}
+
+			if a.DeleteTempFile {
+				a.gostorageClient.DeleteFile(tempStorageObj)
+			}
+		}
+	*/
+
 	return a, t2sErr
+}
+
+func storeAudioToLocalFile(audioData io.Reader, file *os.File) error {
+	var bytes = make([]byte, 1024)
+	for true {
+		numBytes, err := audioData.Read(bytes)
+		_, writeErr := file.Write(bytes)
+		if (numBytes < 1) || (err != nil) { // done reading
+			break
+		}
+		if writeErr != nil {
+			_ = os.Remove(file.Name())
+			return writeErr
+		}
+	}
+	return nil
 }
 
 // T2S Transforms the text in the source file into speech and stores the file in destination.

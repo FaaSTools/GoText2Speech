@@ -33,7 +33,7 @@ func CreateGoT2SClient(credentials *CredentialsHolder, region string) GoT2SClien
 			AccessKeyID:     awsCred.AccessKeyID,
 			SecretAccessKey: awsCred.SecretAccessKey,
 		}
-		credentials = &gostorage.CredentialsHolder{
+		credentials = &CredentialsHolder{
 			AwsCredentials:    awsCred,
 			GoogleCredentials: gcpCred,
 		}

@@ -150,6 +150,7 @@ func (a T2SAmazonWebServices) FindVoice(options TextToSpeechOptions) (*VoiceIdCo
 				options.VoiceConfig.VoiceParamsConfig.Gender.String(),
 				targetEngine,
 				*v.Name)
+			break
 		}
 	}
 

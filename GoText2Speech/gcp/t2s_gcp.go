@@ -174,8 +174,9 @@ func (a T2SGoogleCloudPlatform) AddFileExtensionToDestinationIfNeeded(options Te
 }
 
 func GetBucketAndKeyFromCLoudStorageDestination(destination string) (string, string, error) {
-	// TODO
-	return "", "", nil
+	// TODO streamline; use GCP parser directly
+	storageObj := ParseUrlToGoStorageObject(destination)
+	return storageObj.Bucket, storageObj.Key, nil
 }
 
 func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string, options TextToSpeechOptions) (io.Reader, error) {

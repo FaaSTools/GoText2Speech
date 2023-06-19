@@ -153,7 +153,7 @@ func (a T2SAmazonWebServices) FindVoice(options TextToSpeechOptions) (*VoiceIdCo
 		}
 	}
 
-	if voiceConfig != nil {
+	if voiceConfig == nil {
 		errText := fmt.Sprintf("error: No voice found for language %s and gender %s\n",
 			options.VoiceConfig.VoiceParamsConfig.LanguageCode,
 			options.VoiceConfig.VoiceParamsConfig.Gender.String())

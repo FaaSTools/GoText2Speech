@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/storage v1.30.1
 	cloud.google.com/go/texttospeech v1.7.0
 	github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
-	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go-v2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/service/polly v1.26.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.5

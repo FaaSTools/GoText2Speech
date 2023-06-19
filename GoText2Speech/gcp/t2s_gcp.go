@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	. "goTest/GoText2Speech/shared"
+	. "github.com/FaaSTools/GoText2Speech/GoText2Speech/shared"
 	"io"
 	"math"
 	"strconv"

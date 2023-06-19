@@ -1,7 +1,7 @@
 package aws
 
 import (
-	. "goTest/GoText2Speech/shared"
+	. "github.com/FaaSTools/GoText2Speech/GoText2Speech/shared"
 )
 
 // SSMLModifiersDefined returns true if the options that AWS only supports using SSML are defined.

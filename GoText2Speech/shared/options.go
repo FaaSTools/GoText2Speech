@@ -3,7 +3,7 @@
 package shared
 
 import (
-	"goTest/GoText2Speech/providers"
+	"github.com/FaaSTools/GoText2Speech/GoText2Speech/providers"
 )
 
 type VoiceGender int16

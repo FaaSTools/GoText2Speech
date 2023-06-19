@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	. "goTest/GoText2Speech"
-	"goTest/GoText2Speech/providers"
-	. "goTest/GoText2Speech/shared"
+	. "github.com/FaaSTools/GoText2Speech/GoText2Speech"
+	providers "github.com/FaaSTools/GoText2Speech/GoText2Speech/providers"
+	. "github.com/FaaSTools/GoText2Speech/GoText2Speech/shared"
 	"os"
 )
 

@@ -1,7 +1,7 @@
 package aws
 
 import (
-	"goTest/GoText2Speech/shared"
+	"github.com/FaaSTools/GoText2Speech/GoText2Speech/shared"
 	"strings"
 	"testing"
 )
@@ -207,7 +207,8 @@ func TestGetBucketAndKeyFromAWSDestination(t *testing.T) {
 func TestAddFileExtensionToDestinationIfNeededDeactivated(t *testing.T) {
 	options := shared.TextToSpeechOptions{AddFileExtension: false}
 	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
-	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1")
+	a := T2SAmazonWebServices{}
+	destination, err2 := a.AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1")
 
 	if err1 != nil {
 		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())
@@ -226,7 +227,8 @@ func TestAddFileExtensionToDestinationIfNeededDeactivated(t *testing.T) {
 func TestAddFileExtensionToDestinationIfNeeded(t *testing.T) {
 	options := shared.TextToSpeechOptions{AddFileExtension: true}
 	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
-	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1")
+	a := T2SAmazonWebServices{}
+	destination, err2 := a.AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1")
 
 	if err1 != nil {
 		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())
@@ -249,7 +251,8 @@ func TestAddFileExtensionToDestinationIfNeeded(t *testing.T) {
 func TestAddFileExtensionToDestinationIfNeededNotNeeded(t *testing.T) {
 	options := shared.TextToSpeechOptions{AddFileExtension: true}
 	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
-	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1.mp3")
+	a := T2SAmazonWebServices{}
+	destination, err2 := a.AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1.mp3")
 
 	if err1 != nil {
 		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())
@@ -268,7 +271,8 @@ func TestAddFileExtensionToDestinationIfNeededNotNeeded(t *testing.T) {
 func TestAddFileExtensionToDestinationIfNeededOtherExtension(t *testing.T) {
 	options := shared.TextToSpeechOptions{AddFileExtension: true}
 	outputFormatRaw, err1 := AudioFormatToAWSValue(shared.AudioFormatMp3)
-	destination, err2 := AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1.wav")
+	a := T2SAmazonWebServices{}
+	destination, err2 := a.AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, "test1.wav")
 
 	if err1 != nil {
 		t.Errorf("AudioFormatToAWSValue returned error: %s\n", err1.Error())

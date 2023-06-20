@@ -134,6 +134,7 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 			}
 		}
 
+		fmt.Printf("Trying to find voice\n")
 		voiceIdConfig, chooseVoiceErr := provider.FindVoice(options)
 		if chooseVoiceErr != nil {
 			return a, chooseVoiceErr
@@ -164,6 +165,9 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 
 	// adjust provider-specific settings and execute T2S on selected provider
 	audioData, t2sErr := provider.ExecuteT2SDirect(text, destination, options)
+	if t2sErr != nil {
+		return a, t2sErr
+	}
 
 	var fileExtErr error = nil
 	destination, fileExtErr = provider.AddFileExtensionToDestinationIfNeeded(options, options.OutputFormatRaw, destination)

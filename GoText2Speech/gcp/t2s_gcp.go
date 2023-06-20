@@ -25,7 +25,7 @@ type T2SGoogleCloudPlatform struct {
 // If AudioFormat is unspecified, mp3 will be used.
 // If AudioFormat is not supported on GCP, an error is thrown.
 // Available audio formats on GCP can be seen here: https://pkg.go.dev/cloud.google.com/go/texttospeech@v1.6.0/apiv1/texttospeechpb#AudioEncoding
-func AudioFormatToGCPValue(format AudioFormat) (texttospeechpb.AudioEncoding, error) {
+func AudioFormatToGCPValue(format AudioFormat) (int16, error) {
 	switch format {
 	case AudioFormatUnspecified:
 		fallthrough
@@ -62,7 +62,7 @@ func VoiceGenderToGCPGender(gender VoiceGender) texttospeechpb.SsmlVoiceGender {
 // GCPValueToAudioFormat Reverse of AudioFormatToGCPValue function.
 // It gets a rawFormat value and returns the corresponding AudioFormat enum value.
 // If enum value couldn't be found or if the specified rawFormat is undefined/empty, an error is returned.
-func GCPValueToAudioFormat(rawFormat texttospeechpb.AudioEncoding) (AudioFormat, error) {
+func GCPValueToAudioFormat(rawFormat int16) (AudioFormat, error) {
 	if rawFormat < 1 {
 		return "", errors.New("the specified rawFormat was undefined")
 	}
@@ -92,6 +92,7 @@ func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpee
 	options.Pitch = math.Min(math.Max(options.Pitch, -1), 1) * 20.0
 
 	if options.OutputFormatRaw == nil {
+		fmt.Printf("Setting OutputFormatRaw\n")
 		outputFormatRaw, audioFormatError := AudioFormatToGCPValue(options.OutputFormat)
 		if audioFormatError != nil {
 			return text, options, audioFormatError
@@ -158,7 +159,8 @@ func (a T2SGoogleCloudPlatform) CreateServiceClient(credentials CredentialsHolde
 
 func (a T2SGoogleCloudPlatform) AddFileExtensionToDestinationIfNeeded(options TextToSpeechOptions, outputFormatRaw any, destination string) (string, error) {
 	if options.AddFileExtension {
-		audioFormat, err := GCPValueToAudioFormat(texttospeechpb.AudioEncoding(outputFormatRaw.(int)))
+		//audioFormat, err := GCPValueToAudioFormat(texttospeechpb.AudioEncoding(outputFormatRaw.(int)))
+		audioFormat, err := GCPValueToAudioFormat(outputFormatRaw.(int16))
 		if err != nil {
 			fmt.Printf("%s\n", err.Error())
 			errNew := errors.New(fmt.Sprintf("No file extension found for the specified raw audio format %d. No file extension is added to file name.\n", outputFormatRaw.(int)))
@@ -199,9 +201,15 @@ func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string
 
 	req := texttospeechpb.SynthesizeSpeechRequest{
 		Input: input,
-		Voice: nil,
+		Voice: &texttospeechpb.VoiceSelectionParams{
+			LanguageCode: options.VoiceConfig.VoiceIdConfig.VoiceId[0:5], // TODO assuming all voices start with language code
+			Name:         options.VoiceConfig.VoiceIdConfig.VoiceId,
+			//SsmlGender:   0,
+			//CustomVoice:  nil,
+		},
 		AudioConfig: &texttospeechpb.AudioConfig{
-			AudioEncoding:    options.OutputFormatRaw.(texttospeechpb.AudioEncoding),
+			AudioEncoding: texttospeechpb.AudioEncoding(options.OutputFormatRaw.(int16)),
+			//AudioEncoding:    options.OutputFormatRaw,
 			SpeakingRate:     options.SpeakingRate,
 			Pitch:            options.Pitch,
 			VolumeGainDb:     options.Volume,
@@ -214,6 +222,7 @@ func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("GCP speech synthesis successful!\n")
 
 	stream := bytes.NewReader(result.GetAudioContent())
 	return stream, nil

@@ -92,7 +92,7 @@ func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpee
 	options.Pitch = math.Min(math.Max(options.Pitch, -1), 1) * 20.0
 
 	if options.OutputFormatRaw == nil {
-		fmt.Printf("Setting OutputFormatRaw\n")
+		//fmt.Printf("Setting OutputFormatRaw\n")
 		outputFormatRaw, audioFormatError := AudioFormatToGCPValue(options.OutputFormat)
 		if audioFormatError != nil {
 			return text, options, audioFormatError
@@ -222,7 +222,7 @@ func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("GCP speech synthesis successful!\n")
+	//fmt.Printf("GCP speech synthesis successful!\n")
 
 	stream := bytes.NewReader(result.GetAudioContent())
 	return stream, nil

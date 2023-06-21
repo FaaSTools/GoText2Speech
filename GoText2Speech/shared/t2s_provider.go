@@ -14,9 +14,6 @@ type T2SProvider interface {
 	// IsURLonOwnStorage checks if the given URL references a file that is hosted on the provider's own storage service
 	// (i.e. S3 on AWS or Cloud Storage on GCP).
 	IsURLonOwnStorage(url string) bool
-	// CreateTempDestination creates a URL for the provider's own storage service (i.e. S3 on AWS or Cloud Storage on GCP)
-	// on which a temporary file can be stored.
-	CreateTempDestination(tempBucket string, fileName string) string
 	// GetSupportedAudioFormats returns an array of all audio formats that are supported as output format by the t2s service of this provider.
 	GetSupportedAudioFormats() []AudioFormat
 	// CloseServiceClient closes the connection of the t2s client in the struct (if such an operation is available on the provider).

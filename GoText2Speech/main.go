@@ -152,17 +152,6 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 
 	fmt.Println("Final Text: " + text)
 
-	// if destination of file is not on the storage service of the selected provider:
-	// create temporary location, execute T2S, and move file to actual destination.
-	/*
-		providerDestination := destination
-		if !provider.IsURLonOwnStorage(destination) {
-			splits := strings.Split(destination, "/")
-			fileName := splits[len(splits)-1]
-			providerDestination = provider.CreateTempDestination(a.tempBuckets[options.Provider], fileName)
-		}
-	*/
-
 	// adjust provider-specific settings and execute T2S on selected provider
 	audioData, t2sErr := provider.ExecuteT2SDirect(text, destination, options)
 	if t2sErr != nil {
@@ -281,7 +270,7 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 	localFilePath := ""
 	text := ""
 	fileOnCloudProvider := false
-	if a.IsProviderStorageUrl(source) { // file on cloud provider
+	if a.IsProviderStorageUrl(source) { // file on supported cloud provider
 		f, err := os.CreateTemp("", "sample")
 		if err != nil {
 			return a, errors.Join(errors.New(fmt.Sprintf("Couldn't download the source file '%s' because creation of temporary file failed.", source)), err)

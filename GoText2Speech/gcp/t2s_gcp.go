@@ -11,9 +11,7 @@ import (
 	. "github.com/FaaSTools/GoText2Speech/GoText2Speech/shared"
 	"io"
 	"math"
-	"strconv"
 	"strings"
-	"time"
 )
 
 type T2SGoogleCloudPlatform struct {
@@ -105,11 +103,6 @@ func (a T2SGoogleCloudPlatform) TransformOptions(text string, options TextToSpee
 
 func (a T2SGoogleCloudPlatform) IsURLonOwnStorage(url string) bool {
 	return IsGoogleUrl(url)
-}
-
-func (a T2SGoogleCloudPlatform) CreateTempDestination(tempBucket string, fileName string) string {
-	now := time.Now()
-	return "https://storage.cloud.google.com/" + tempBucket + "/" + fileName + strconv.FormatInt(now.UnixNano(), 10)
 }
 
 func (a T2SGoogleCloudPlatform) FindVoice(options TextToSpeechOptions) (*VoiceIdConfig, error) {
@@ -254,7 +247,7 @@ func (a T2SGoogleCloudPlatform) UploadFile(fileContents io.Reader, destination s
 // Inspired by Google Cloud Storage examples (https://cloud.google.com/storage/docs/uploading-objects#permissions-client-libraries).
 func (a T2SGoogleCloudPlatform) uploadFileToCS(fileContents io.Reader, bucket string, key string) error {
 
-	fmt.Printf("Uploading file...\n")
+	fmt.Printf("Uploading file to %s/%s...\n", bucket, key)
 
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx)
@@ -267,6 +260,8 @@ func (a T2SGoogleCloudPlatform) uploadFileToCS(fileContents io.Reader, bucket st
 	cloudObj := client.Bucket(bucket).Object(key)
 
 	wc := cloudObj.NewWriter(ctx)
+	fmt.Printf("fileContents: %s", fileContents)
+	fmt.Printf("Created writer\n")
 	if _, err = io.Copy(wc, fileContents); err != nil {
 		return fmt.Errorf("io.Copy: %w", err)
 	}
@@ -280,7 +275,7 @@ func (a T2SGoogleCloudPlatform) uploadFileToCS(fileContents io.Reader, bucket st
 
 func (a T2SGoogleCloudPlatform) CloseServiceClient() error {
 	if a.t2sClient == nil {
-		fmt.Println("Warning: Couldn't close GCP service client, because client doesn't exist.")
+		fmt.Println("Warning: Couldn't close GCP T2S service client, because client doesn't exist.")
 		return nil
 	}
 	return a.t2sClient.Close()

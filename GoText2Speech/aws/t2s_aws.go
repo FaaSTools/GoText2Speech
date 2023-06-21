@@ -12,9 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/polly"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"io"
-	"strconv"
 	"strings"
-	"time"
 )
 
 type T2SAmazonWebServices struct {
@@ -74,11 +72,6 @@ func (a T2SAmazonWebServices) GetSupportedAudioFormats() []AudioFormat {
 
 func (a T2SAmazonWebServices) IsURLonOwnStorage(url string) bool {
 	return IsAWSUrl(url)
-}
-
-func (a T2SAmazonWebServices) CreateTempDestination(tempBucket string, fileName string) string {
-	now := time.Now()
-	return "https://" + tempBucket + ".s3.amazonaws.com/" + fileName + strconv.FormatInt(now.UnixNano(), 10)
 }
 
 // TransformOptions

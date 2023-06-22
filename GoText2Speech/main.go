@@ -443,6 +443,7 @@ func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination 
 
 // IsProviderStorageUrl checks if the given string is a valid file URL for a storage service of one of the
 // supported storage providers.
+/*
 func (a GoT2SClient) IsProviderStorageUrl(url string) bool {
 	for _, provider := range providers.GetAllProviders() {
 		if a.getProviderInstance(provider).IsURLonOwnStorage(url) {
@@ -450,4 +451,10 @@ func (a GoT2SClient) IsProviderStorageUrl(url string) bool {
 		}
 	}
 	return false
+}
+*/
+
+// TODO make variable again without creating new provider instances
+func (a GoT2SClient) IsProviderStorageUrl(url string) bool {
+	return IsAWSUrl(url) || IsGoogleUrl(url)
 }

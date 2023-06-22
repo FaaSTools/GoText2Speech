@@ -277,7 +277,7 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 		}
 		// TODO parse S3 URIs as well
 		storageObj := ParseUrlToGoStorageObject(source)
-		a.initializeGoStorage()
+		a = a.initializeGoStorage()
 		a.gostorageClient.DownloadFile(storageObj, f.Name())
 		localFilePath = f.Name()
 		fileOnCloudProvider = true

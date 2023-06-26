@@ -271,15 +271,25 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 	text := ""
 	fileOnCloudProvider := false
 	if a.IsProviderStorageUrl(source) { // file on supported cloud provider
-		f, err := os.CreateTemp("", "sample")
-		if err != nil {
-			return a, errors.Join(errors.New(fmt.Sprintf("Couldn't download the source file '%s' because creation of temporary file failed.", source)), err)
-		}
+		/*
+			f, err := os.CreateTemp("", "sample")
+			if err != nil {
+				return a, errors.Join(errors.New(fmt.Sprintf("Couldn't download the source file '%s' because creation of temporary file failed.", source)), err)
+			}
+		*/
 		// TODO parse S3 URIs as well
 		storageObj := ParseUrlToGoStorageObject(source)
 		a = a.initializeGoStorage()
-		a.gostorageClient.DownloadFile(storageObj, f.Name())
-		localFilePath = f.Name()
+		fileReader := a.gostorageClient.DownloadFileAsReader(storageObj)
+		textBytes, readerErr := io.ReadAll(fileReader)
+		if readerErr != nil {
+			return a, readerErr // TODO msg
+		}
+		text = string(textBytes)
+		/*
+			a.gostorageClient.DownloadFile(storageObj, f.Name())
+			localFilePath = f.Name()
+		*/
 		fileOnCloudProvider = true
 	} else if strings.HasPrefix(source, "http") { // file somewhere else online
 		response, err := http.Get(source)

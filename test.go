@@ -30,11 +30,17 @@ func main() {
 		fmt.Println("MyEvent.Text:", MyEvent.Text)
 	*/
 
+	fmt.Println("temp dir:", os.TempDir())
+
 	t2sClient := CreateGoT2SClient(nil, "us-east-1")
 
 	options := GetDefaultTextToSpeechOptions()
 	options.Provider = providers.ProviderAWS
 	options.VoiceConfig.VoiceIdConfig = VoiceIdConfig{VoiceId: "en-US-News-N"}
+	options.VoiceConfig.VoiceParamsConfig = VoiceParamsConfig{
+		LanguageCode: "en-US",
+		Gender:       VoiceGenderMale,
+	}
 
 	var err error = nil
 	/*

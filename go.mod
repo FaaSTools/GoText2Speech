@@ -5,11 +5,16 @@ go 1.19
 require (
 	cloud.google.com/go/storage v1.30.1
 	cloud.google.com/go/texttospeech v1.7.0
-	github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
+	//github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
 	github.com/aws/aws-sdk-go-v2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/service/polly v1.26.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.5
 //github.com/dave-meyer/GoStorage v0.0.0-20230601102518-06972751a46f
+)
+
+require (
+	//github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
+	github.com/dave-meyer/GoStorage v0.0.0-20230626195759-703cea3e27dd
 )
 
 require (

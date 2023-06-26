@@ -3,8 +3,8 @@ package GoText2Speech
 import (
 	"errors"
 	"fmt"
-	"github.com/FaaSTools/GoStorage/gostorage"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/dave-meyer/GoStorage/gostorage"
 	"sync"
 	//"github.com/dave-meyer/GoStorage/gostorage"
 	ts2_aws "github.com/FaaSTools/GoText2Speech/GoText2Speech/aws"

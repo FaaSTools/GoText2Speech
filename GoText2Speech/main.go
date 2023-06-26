@@ -286,6 +286,7 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 			return a, readerErr // TODO msg
 		}
 		text = string(textBytes)
+		(fileReader.(io.ReadCloser)).Close()
 		/*
 			a.gostorageClient.DownloadFile(storageObj, f.Name())
 			localFilePath = f.Name()

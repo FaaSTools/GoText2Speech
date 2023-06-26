@@ -12,10 +12,8 @@ require (
 //github.com/dave-meyer/GoStorage v0.0.0-20230601102518-06972751a46f
 )
 
-require (
-	//github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
-	github.com/dave-meyer/GoStorage v0.0.0-20230626195759-703cea3e27dd
-)
+//github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
+require github.com/dave-meyer/GoStorage v0.0.0-20230626195759-703cea3e27dd
 
 require (
 	cloud.google.com/go v0.110.0 // indirect

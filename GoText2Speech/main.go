@@ -1,6 +1,7 @@
 package GoText2Speech
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -281,11 +282,19 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 		storageObj := ParseUrlToGoStorageObject(source)
 		a = a.initializeGoStorage()
 		fileReader := a.gostorageClient.DownloadFileAsReader(storageObj)
-		textBytes, readerErr := io.ReadAll(fileReader)
-		if readerErr != nil {
-			return a, readerErr // TODO msg
+		fileBuf := new(bytes.Buffer)
+		_, bufErr := fileBuf.ReadFrom(fileReader)
+		if bufErr != nil {
+			return a, bufErr // TODO msg
 		}
-		text = string(textBytes)
+		/*
+			textBytes, readerErr := io.ReadAll(fileReader)
+			if readerErr != nil {
+				return a, readerErr // TODO msg
+			}
+			text = string(textBytes)
+		*/
+		text = fileBuf.String()
 		(fileReader.(io.ReadCloser)).Close()
 		/*
 			a.gostorageClient.DownloadFile(storageObj, f.Name())

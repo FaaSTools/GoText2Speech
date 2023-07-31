@@ -15,6 +15,8 @@ cloud.google.com/go/storage v1.30.1/go.mod h1:NfxhC0UJE1aXSx7CIIbCf7y9HKT7Biccwk
 cloud.google.com/go/texttospeech v1.7.0 h1:hwMFhG+5OvdUVV2BbcXOTU+wnJUK4UfZ77R3IHXRCPU=
 cloud.google.com/go/texttospeech v1.7.0/go.mod h1:amX/onEBg0THdly26HKc0omJ7z9D4ABhLRnRwznx+dU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/FaaSTools/GoStorage v0.0.0-20230726224320-7dcaaffb7f3b h1:0zzCdgChApzxcsKNKJqC2Zc4GbkVHg7B9zkcejHv7n4=
+github.com/FaaSTools/GoStorage v0.0.0-20230726224320-7dcaaffb7f3b/go.mod h1:5F8gS7dNqtrhPAXE6v5Ra5r0hl2iyfGMA301RNVaae8=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/aws/aws-sdk-go-v2 v1.16.2/go.mod h1:ytwTPBG6fXTZLxxeeCCWj2/EMYp/xDUgX+OET6TLNNU=
 github.com/aws/aws-sdk-go-v2 v1.18.0 h1:882kkTpSFhdgYRKVZ/VCgf7sd0ru57p2JCxz4/oN5RY=
@@ -65,8 +67,8 @@ github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4/go.mod h1:6pvJx4me5XP
 github.com/cncf/xds/go v0.0.0-20210805033703-aa0b78936158/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
-github.com/dave-meyer/GoStorage v0.0.0-20230626195759-703cea3e27dd h1:vXy4RVPEN9qVHqfHn+5p8xPaUphW4yXerOd3s6pnBjQ=
-github.com/dave-meyer/GoStorage v0.0.0-20230626195759-703cea3e27dd/go.mod h1:7K/KTK5yzjthlddX2nGHxGFz6I6zNFnvaPYuUN4QoJg=
+github.com/dave-meyer/GoStorage v0.0.0-20230727051433-2e65e16108e4 h1:QKLY0ruXTX9pPjPVhcie5SltBzPoCcHg5SNRa2k1xOA=
+github.com/dave-meyer/GoStorage v0.0.0-20230727051433-2e65e16108e4/go.mod h1:7K/KTK5yzjthlddX2nGHxGFz6I6zNFnvaPYuUN4QoJg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

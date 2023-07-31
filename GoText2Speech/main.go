@@ -4,18 +4,17 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/dave-meyer/GoStorage/gostorage"
-	"sync"
-	//"github.com/dave-meyer/GoStorage/gostorage"
+	"github.com/FaaSTools/GoStorage/gostorage"
 	ts2_aws "github.com/FaaSTools/GoText2Speech/GoText2Speech/aws"
 	ts2_gcp "github.com/FaaSTools/GoText2Speech/GoText2Speech/gcp"
 	"github.com/FaaSTools/GoText2Speech/GoText2Speech/providers"
 	. "github.com/FaaSTools/GoText2Speech/GoText2Speech/shared"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 )
 
 type GoT2SClient struct {

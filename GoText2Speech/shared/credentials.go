@@ -1,6 +1,5 @@
 package shared
 
-//import "github.com/FaaSTools/GoStorage/gostorage"
-import "github.com/dave-meyer/GoStorage/gostorage"
+import "github.com/FaaSTools/GoStorage/gostorage"
 
 type CredentialsHolder = gostorage.CredentialsHolder

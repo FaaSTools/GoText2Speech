@@ -1,19 +1,16 @@
 module github.com/FaaSTools/GoText2Speech
 
-go 1.19
+go 1.20
 
 require (
 	cloud.google.com/go/storage v1.30.1
 	cloud.google.com/go/texttospeech v1.7.0
-	//github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
+	github.com/FaaSTools/GoStorage v0.0.0-20230726224320-7dcaaffb7f3b
 	github.com/aws/aws-sdk-go-v2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/service/polly v1.26.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.5
-//github.com/dave-meyer/GoStorage v0.0.0-20230601102518-06972751a46f
+	github.com/dave-meyer/GoStorage v0.0.0-20230727051433-2e65e16108e4
 )
-
-//github.com/FaaSTools/GoStorage v0.0.0-20230602012747-e64792f6e8b8
-require github.com/dave-meyer/GoStorage v0.0.0-20230626195759-703cea3e27dd
 
 require (
 	cloud.google.com/go v0.110.0 // indirect

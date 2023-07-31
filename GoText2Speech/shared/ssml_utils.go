@@ -115,7 +115,7 @@ func integrateAttributeValueIntoTag(openingTag string, value float64, attributeN
 	submatchesWithUnit := regexWithUnit.FindStringSubmatch(openingTag)
 	if submatchesWithUnit != nil {
 		predefinedValueStr := submatchesWithUnit[1]
-		predefinedValue, _ := strconv.ParseFloat(predefinedValueStr, 64) // TODO catch err?
+		predefinedValue, _ := strconv.ParseFloat(predefinedValueStr, 64)
 		value += predefinedValue
 		return regexWithUnit.ReplaceAllString(openingTag, fmt.Sprintf("%s=\"%f%s\"", attributeName, value, attributeUnit))
 	} else { // check if attribute exists without unit -> overwrite

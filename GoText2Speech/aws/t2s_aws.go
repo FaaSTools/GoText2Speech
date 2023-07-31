@@ -232,34 +232,6 @@ func (a T2SAmazonWebServices) ExecuteT2SDirect(text string, destination string, 
 	}
 	fmt.Printf("Synthesizing done!\n")
 	return output.AudioStream, nil
-
-	/*
-		destination, err = AddFileExtensionToDestinationIfNeeded(options, outputFormatRaw, destination)
-		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			// not a fatal error -> just resume code
-		}
-
-		bucket, key, destinationFormatErr := GetBucketAndKeyFromAWSDestination(destination)
-		if destinationFormatErr != nil {
-			return destinationFormatErr
-		}
-
-		err = a.uploadFileToS3(output.AudioStream, bucket, key)
-		errClose := output.AudioStream.Close()
-		if err != nil {
-			errNew := errors.New("Error while uploading file on AWS S3: " + err.Error())
-			fmt.Printf(errNew.Error())
-			return errNew
-		}
-		if errClose != nil {
-			errNew := errors.New("Error while closing speech synthesis audio stream: " + errClose.Error())
-			fmt.Printf(errNew.Error())
-			return errNew
-		}
-
-		return nil
-	*/
 }
 
 // GetBucketAndKeyFromAWSDestination receives either an AWS S3 URI (starting with "s3://") or

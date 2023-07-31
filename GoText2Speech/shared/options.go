@@ -16,10 +16,6 @@ const (
 	VoiceGenderMale
 	// VoiceGenderFemale adult female voice. Available on AWS and GCP.
 	VoiceGenderFemale
-	// VoiceGenderMaleChild child male voice. Available only on GCP.
-	//VoiceGenderMaleChild
-	// VoiceGenderFemaleChild child female voice. Available only on GCP.
-	//VoiceGenderFemaleChild
 	// VoiceGenderNeutral gender-neutral voice. Defined only by GCP, but not yet supported.
 	VoiceGenderNeutral
 )
@@ -89,7 +85,6 @@ func (t TextType) String() string {
 // VoiceParamsConfig is selected.
 // VoiceParamsConfig specifies the language, gender and engine of the voice that should be selected. The T2S function automatically
 // chooses the first voice id with the specified language, gender and engine parameters.
-// TODO error handling? Language not available? Gender not available?
 //
 // If VoiceParamsConfig is undefined as well, the default value from GetDefaultVoiceParamsConfig is used.
 // If one of the properties of VoiceParamsConfig is undefined (empty string for LanguageCode and VoiceGenderUnspecified
@@ -169,7 +164,6 @@ type TextToSpeechOptions struct {
 	Provider    providers.Provider
 	TextType    TextType
 	VoiceConfig VoiceConfig
-	// TODO transform values for GCP
 	// SpeakingRate 1.0 is normal speed, 0.5 is half speed, 2.0 is double speed
 	SpeakingRate float64
 	// Pitch 0.0 is normal pitch, 0.05 is a little higher pitch, -0.05 a little lower pitch. Recommended range: [-1.0, 1.0]

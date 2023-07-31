@@ -271,34 +271,19 @@ func (a GoT2SClient) T2S(source string, destination string, options TextToSpeech
 	text := ""
 	fileOnCloudProvider := false
 	if a.IsProviderStorageUrl(source) { // file on supported cloud provider
-		/*
-			f, err := os.CreateTemp("", "sample")
-			if err != nil {
-				return a, errors.Join(errors.New(fmt.Sprintf("Couldn't download the source file '%s' because creation of temporary file failed.", source)), err)
-			}
-		*/
-		// TODO parse S3 URIs as well
 		storageObj := ParseUrlToGoStorageObject(source)
 		a = a.initializeGoStorage()
 		fileReader := a.gostorageClient.DownloadFileAsReader(storageObj)
 		fileBuf := new(bytes.Buffer)
 		_, bufErr := fileBuf.ReadFrom(fileReader)
 		if bufErr != nil {
-			return a, bufErr // TODO msg
+			return a, errors.Join(errors.New("error occurred while reading input file from file reader"), bufErr)
 		}
-		/*
-			textBytes, readerErr := io.ReadAll(fileReader)
-			if readerErr != nil {
-				return a, readerErr // TODO msg
-			}
-			text = string(textBytes)
-		*/
 		text = fileBuf.String()
-		(fileReader.(io.ReadCloser)).Close()
-		/*
-			a.gostorageClient.DownloadFile(storageObj, f.Name())
-			localFilePath = f.Name()
-		*/
+		readerCloseErr := (fileReader.(io.ReadCloser)).Close()
+		if readerCloseErr != nil {
+			fmt.Printf("non fatal-error while closing input file reader: %s\n", readerCloseErr.Error())
+		}
 		fileOnCloudProvider = true
 	} else if strings.HasPrefix(source, "http") { // file somewhere else online
 		response, err := http.Get(source)
@@ -400,7 +385,7 @@ func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination 
 		if len(voicePerProvider) < 1 {
 			return options, errors.New(fmt.Sprintf(
 				"Error while trying to find voice. No voice found with the given language '%s' and gender '%s' on any provider.",
-				options.VoiceConfig.VoiceParamsConfig.LanguageCode, options.VoiceConfig.VoiceParamsConfig.Gender)) // TODO engine?
+				options.VoiceConfig.VoiceParamsConfig.LanguageCode, options.VoiceConfig.VoiceParamsConfig.Gender))
 		}
 
 		// Only one provider offers this voice -> use this provider
@@ -421,18 +406,6 @@ func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination 
 			return options, nil
 		}
 	}
-
-	// Destination is not on any of the providers (i.e. destination is local file) -> next heuristic
-	// TODO (?) Third heuristic: Choose provider on which the source file is stored
-	/*
-		for prov, voice := range voicePerProvider {
-			if a.getProviderInstance(prov).IsURLonOwnStorage(destination) {
-				options.Provider = prov
-				options.VoiceConfig.VoiceIdConfig = *voice
-				return options, nil
-			}
-		}
-	*/
 
 	// Third/Fourth heuristic: Choose provider that offers the chosen output format
 	if options.OutputFormat != AudioFormatUnspecified {
@@ -462,18 +435,6 @@ func (a GoT2SClient) determineProvider(options TextToSpeechOptions, destination 
 
 // IsProviderStorageUrl checks if the given string is a valid file URL for a storage service of one of the
 // supported storage providers.
-/*
-func (a GoT2SClient) IsProviderStorageUrl(url string) bool {
-	for _, provider := range providers.GetAllProviders() {
-		if a.getProviderInstance(provider).IsURLonOwnStorage(url) {
-			return true
-		}
-	}
-	return false
-}
-*/
-
-// TODO make variable again without creating new provider instances
 func (a GoT2SClient) IsProviderStorageUrl(url string) bool {
 	return IsAWSUrl(url) || IsGoogleUrl(url)
 }

@@ -167,7 +167,6 @@ func (a T2SGoogleCloudPlatform) AddFileExtensionToDestinationIfNeeded(options Te
 }
 
 func GetBucketAndKeyFromCLoudStorageDestination(destination string) (string, string, error) {
-	// TODO streamline; use GCP parser directly
 	storageObj := ParseUrlToGoStorageObject(destination)
 	return storageObj.Bucket, storageObj.Key, nil
 }
@@ -193,14 +192,11 @@ func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string
 	req := texttospeechpb.SynthesizeSpeechRequest{
 		Input: input,
 		Voice: &texttospeechpb.VoiceSelectionParams{
-			LanguageCode: options.VoiceConfig.VoiceIdConfig.VoiceId[0:5], // TODO assuming all voices start with language code
+			LanguageCode: options.VoiceConfig.VoiceIdConfig.VoiceId[0:5],
 			Name:         options.VoiceConfig.VoiceIdConfig.VoiceId,
-			//SsmlGender:   0,
-			//CustomVoice:  nil,
 		},
 		AudioConfig: &texttospeechpb.AudioConfig{
-			AudioEncoding: texttospeechpb.AudioEncoding(options.OutputFormatRaw.(int16)),
-			//AudioEncoding:    options.OutputFormatRaw,
+			AudioEncoding:    texttospeechpb.AudioEncoding(options.OutputFormatRaw.(int16)),
 			SpeakingRate:     options.SpeakingRate,
 			Pitch:            options.Pitch,
 			VolumeGainDb:     options.Volume,
@@ -216,20 +212,6 @@ func (a T2SGoogleCloudPlatform) ExecuteT2SDirect(text string, destination string
 
 	stream := bytes.NewReader(result.GetAudioContent())
 	return stream, nil
-
-	/*
-		bucket, key, destinationFormatErr := GetBucketAndKeyFromCLoudStorageDestination(destination)
-		if destinationFormatErr != nil {
-			return destinationFormatErr
-		}
-
-		uploadErr := a.uploadFileToCS(bytes.NewReader(result.GetAudioContent()), bucket, key)
-		if uploadErr != nil {
-			return uploadErr // TODO wrap
-		}
-
-		return nil
-	*/
 }
 
 func (a T2SGoogleCloudPlatform) UploadFile(fileContents io.Reader, destination string) error {

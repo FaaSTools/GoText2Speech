@@ -175,7 +175,7 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 			return a, errors.Join(errors.New("error while creating file for temporarily storing audio file before upload"), err)
 		}
 
-		err = storeAudioToLocalFile(audioData, tmpFile)
+		err = StoreAudioToLocalFile(audioData, tmpFile)
 		if err != nil {
 			if a.IsProviderStorageUrl(destination) {
 				return a, errors.Join(errors.New("error while writing audio to temporary file"), err)
@@ -210,7 +210,7 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 			return a, errors.Join(errors.New(fmt.Sprintf("error while opening file at destination %s", destination)), err)
 		}
 
-		err = storeAudioToLocalFile(audioData, file)
+		err = StoreAudioToLocalFile(audioData, file)
 		if err != nil {
 			return a, errors.Join(errors.New("error while writing audio to local file"), err)
 		}
@@ -239,22 +239,6 @@ func (a GoT2SClient) T2SDirect(text string, destination string, options TextToSp
 	*/
 
 	return a, t2sErr
-}
-
-func storeAudioToLocalFile(audioData io.Reader, file *os.File) error {
-	var bytes = make([]byte, 1024)
-	for true {
-		numBytes, err := audioData.Read(bytes)
-		_, writeErr := file.Write(bytes)
-		if (numBytes < 1) || (err != nil) { // done reading
-			break
-		}
-		if writeErr != nil {
-			_ = os.Remove(file.Name())
-			return writeErr
-		}
-	}
-	return nil
 }
 
 // T2S Transforms the text in the source file into speech and stores the file in destination.

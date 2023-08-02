@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	gostorage "github.com/FaaSTools/GoStorage/gostorage"
+	"io"
 	"os"
 	"strings"
 )
@@ -96,4 +97,20 @@ func parseGoogleUrl(urlString string) gostorage.GoStorageObject {
 		bucket = urlString
 	}
 	return gostorage.GoStorageObject{Bucket: bucket, Key: key, ProviderType: gostorage.ProviderGoogle}
+}
+
+func StoreAudioToLocalFile(audioData io.Reader, file *os.File) error {
+	var bytes = make([]byte, 1024)
+	for {
+		numBytes, err := audioData.Read(bytes)
+		_, writeErr := file.Write(bytes)
+		if (numBytes < 1) || (err != nil) { // done reading
+			break
+		}
+		if writeErr != nil {
+			_ = os.Remove(file.Name())
+			return writeErr
+		}
+	}
+	return nil
 }
